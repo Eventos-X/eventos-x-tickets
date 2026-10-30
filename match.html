@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { 
-            --tinder-rosa: #ec4899; --tinder-naranja: #f43f5e; --tinder-verde: #10b981; --tinder-rojo: #ef4444; 
+            --tinder-rosa: #ec4899; --tinder-naranja: #f43f5e; --tinder-verde: #10b981; --tinder-rojo: #ef4444; --tinder-oro: #fbbf24;
             --fondo: #050505; --caja: #111111; --texto: #ffffff; 
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--fondo); color: var(--texto); margin: 0; padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100dvh; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -15,51 +15,61 @@
         .pantalla { display: none; width: 100%; max-width: 420px; height: 100dvh; flex-direction: column; position: relative; background: var(--fondo); }
         .pantalla.active { display: flex; }
 
-        /* Navbar Centrada */
+        /* Navbar Premium */
         .navbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 15px 20px; z-index: 10; }
         .nav-izq { display: flex; justify-content: flex-start; }
         .nav-der { display: flex; justify-content: flex-end; }
         .logo-nav { font-size: 24px; font-weight: 900; background: linear-gradient(45deg, var(--tinder-rosa), var(--tinder-naranja)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; text-align: center; }
         
-        /* Animación del Fueguito */
-        .btn-fuego { background: transparent; border: none; cursor: pointer; font-size: 24px; filter: grayscale(100%); opacity: 0.5; transition: 0.3s; padding: 5px; }
+        /* Animación del Fueguito Inbox */
+        .btn-fuego { background: transparent; border: none; cursor: pointer; font-size: 26px; filter: grayscale(100%); opacity: 0.5; transition: 0.3s; padding: 5px; }
         .btn-fuego.activo { filter: grayscale(0%); opacity: 1; animation: latido-fuego 1.5s infinite; }
-        @keyframes latido-fuego {
-            0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 2px #ff4500); }
-            50% { transform: scale(1.2) rotate(10deg); filter: drop-shadow(0 0 10px #ff0000); }
-            100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 2px #ff4500); }
+        @keyframes latido-fuego { 
+            0% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 2px #ff4500); } 
+            50% { transform: scale(1.2) rotate(10deg); filter: drop-shadow(0 0 12px #ff0000); } 
+            100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 2px #ff4500); } 
         }
 
-        .contenido-centrado { flex: 1; padding: 30px; display: flex; flex-direction: column; justify-content: center; z-index: 2; }
+        .contenido-centrado { flex: 1; padding: 30px; display: flex; flex-direction: column; justify-content: center; z-index: 2; overflow-y: auto; }
         .titulo-seccion { font-size: 32px; margin-bottom: 10px; font-weight: 800; text-align: center; }
         .subtitulo { color: #888; font-size: 15px; margin-bottom: 40px; text-align: center; line-height: 1.5; }
-        .input-box { position: relative; margin-bottom: 25px; }
+        
+        .input-box { position: relative; margin-bottom: 20px; }
         .input-box input, .input-box select { width: 100%; padding: 20px 20px 20px 50px; background: #1a1a1a; border: 2px solid #222; color: white; border-radius: 20px; font-size: 16px; font-weight: 600; box-sizing: border-box; transition: 0.3s; outline: none; appearance: none; }
         .input-box input:focus, .input-box select:focus { border-color: var(--tinder-rosa); background: #000; box-shadow: 0 0 20px rgba(236, 72, 153, 0.2); }
         .input-box span { position: absolute; left: 20px; top: 20px; color: #888; font-size: 18px; font-weight: bold; }
-        .btn-principal { background: linear-gradient(45deg, var(--tinder-rosa), var(--tinder-naranja)); color: white; border: none; padding: 20px; border-radius: 30px; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3); transition: 0.2s; }
+        
+        .btn-principal { background: linear-gradient(45deg, var(--tinder-rosa), var(--tinder-naranja)); color: white; border: none; padding: 20px; border-radius: 30px; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; box-shadow: 0 10px 20px rgba(236, 72, 153, 0.3); transition: 0.2s; margin-top: 10px; }
         .btn-principal:active { transform: scale(0.95); }
 
+        /* Contenedor del Swipe */
         .swipe-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; padding: 10px; perspective: 1000px; }
         
-        .tarjeta-wrapper { position: absolute; width: calc(100% - 30px); height: calc(100% - 20px); max-height: 600px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.8); overflow: hidden; will-change: transform; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; background: #222; }
+        .tarjeta-wrapper { position: absolute; width: calc(100% - 30px); height: calc(100% - 20px); max-height: 600px; border-radius: 25px; box-shadow: 0 20px 40px rgba(0,0,0,0.9); overflow: hidden; will-change: transform; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; background: #222; }
         
         #tarjeta-1 { z-index: 2; cursor: grab; }
         #tarjeta-2 { z-index: 1; transform: scale(0.95) translateY(15px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
         
         .foto-perfil { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; background: #1a1a1a; }
 
-        .info-perfil { position: absolute; bottom: 0; left: 0; width: 100%; padding: 80px 20px 25px 20px; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 50%, transparent 100%); box-sizing: border-box; text-align: left; z-index: 2; }
-        .info-perfil h2 { margin: 0; font-size: 32px; font-weight: 800; display: flex; align-items: center; gap: 10px; text-shadow: 0 2px 5px rgba(0,0,0,0.8); letter-spacing: -1px; }
-        .dot-online { width: 10px; height: 10px; background: var(--tinder-verde); border-radius: 50%; box-shadow: 0 0 10px var(--tinder-verde); display: inline-block; }
-        .dot-offline { width: 10px; height: 10px; background: #666; border-radius: 50%; display: inline-block; }
-        .info-perfil p { margin: 5px 0 0 0; color: #ccc; font-size: 15px; display: flex; align-items: center; gap: 6px; font-weight: 600; }
+        /* Efecto Sombra (Vignette) para leer bien el nombre */
+        .info-perfil { position: absolute; bottom: 0; left: 0; width: 100%; padding: 80px 20px 25px 20px; background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.5) 60%, transparent 100%); box-sizing: border-box; text-align: left; z-index: 2; }
+        .info-perfil h2 { margin: 0; font-size: 30px; font-weight: 800; display: flex; align-items: center; gap: 10px; text-shadow: 0 2px 5px rgba(0,0,0,0.8); letter-spacing: -1px; word-break: break-all; }
+        
+        /* Puntos de Estado */
+        .dot-online { width: 12px; height: 12px; background: var(--tinder-verde); border-radius: 50%; box-shadow: 0 0 10px var(--tinder-verde); display: inline-block; animation: pulso-online 2s infinite; }
+        .dot-offline { width: 12px; height: 12px; background: #666; border-radius: 50%; display: inline-block; }
+        @keyframes pulso-online { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        
+        .info-perfil p { margin: 5px 0 0 0; color: #ccc; font-size: 15px; display: flex; align-items: center; gap: 6px; font-weight: 600; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
 
-        /* Nuevos Sellos BARRO y NEXT */
+        /* Sellos Personalizados (BARRO / NEXT / SÚPER BARRO) */
         .sello { position: absolute; top: 50px; padding: 8px 25px; border: 5px solid; border-radius: 12px; font-size: 40px; font-weight: 900; opacity: 0; text-transform: uppercase; z-index: 10; letter-spacing: 2px; }
         .sello.barro { right: 30px; color: var(--tinder-verde); border-color: var(--tinder-verde); transform: rotate(15deg); text-shadow: 0 0 10px rgba(16, 185, 129, 0.4); box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.4), 0 0 10px rgba(16, 185, 129, 0.4); }
         .sello.next { left: 30px; color: var(--tinder-rojo); border-color: var(--tinder-rojo); transform: rotate(-15deg); text-shadow: 0 0 10px rgba(239, 68, 68, 0.4); box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.4), 0 0 10px rgba(239, 68, 68, 0.4); }
+        .sello.super { bottom: 150px; left: 50%; transform: translateX(-50%) rotate(-5deg); color: var(--tinder-oro); border-color: var(--tinder-oro); text-shadow: 0 0 15px rgba(251, 191, 36, 0.6); box-shadow: inset 0 0 15px rgba(251, 191, 36, 0.5), 0 0 15px rgba(251, 191, 36, 0.5); }
 
+        /* Radar Animado */
         .radar-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; opacity: 0; transition: opacity 0.5s; z-index: 0; position: absolute; width: 100%; }
         .radar-container.visible { opacity: 1; }
         .radar { width: 80px; height: 80px; border-radius: 50%; background: var(--tinder-rosa); position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
@@ -67,31 +77,39 @@
         .radar::after { animation-delay: 1s; }
         @keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
 
+        /* Botonera Flotante */
         .controles { padding: 15px; display: flex; justify-content: space-evenly; align-items: center; padding-bottom: 30px; z-index: 10; }
         .btn-control { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; background: #111; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.1s; }
-        .btn-rechazo { color: var(--tinder-rojo); }
-        .btn-corazon { color: var(--tinder-verde); }
-        .btn-star { width: 50px; height: 50px; font-size: 20px; color: #3b82f6; }
+        .btn-rechazo { color: var(--tinder-rojo); border: 1px solid #333; }
+        .btn-corazon { color: var(--tinder-verde); border: 1px solid #333; }
+        .btn-star { width: 55px; height: 55px; font-size: 24px; color: var(--tinder-oro); border: 1px solid #333; }
         .btn-control:active { transform: scale(0.85); }
 
+        /* Bandeja de Matches */
         #lista-matches { flex: 1; overflow-y: auto; padding: 10px 20px; }
-        .match-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 15px 20px; border-radius: 20px; margin-bottom: 12px; transition: 0.2s; border: 1px solid #222; }
-        .match-item:active { transform: scale(0.98); background: #222; }
+        .match-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 15px 20px; border-radius: 20px; margin-bottom: 12px; transition: 0.2s; border: 1px solid #222; position: relative; overflow: hidden; }
+        .match-item.super-match { border-color: var(--tinder-oro); background: linear-gradient(45deg, #1a1a1a, #2a2000); }
         .match-avatar { width: 55px; height: 55px; border-radius: 50%; object-fit: cover; background: #333; margin-right: 15px; border: 2px solid var(--tinder-rosa); }
+        .match-item.super-match .match-avatar { border-color: var(--tinder-oro); }
         .match-info { flex: 1; }
-        .match-info h3 { margin: 0 0 3px 0; font-size: 18px; letter-spacing: -0.5px; }
+        .match-info h3 { margin: 0 0 3px 0; font-size: 17px; letter-spacing: -0.5px; }
         .match-info p { margin: 0; color: #888; font-size: 13px; font-weight: bold; }
         .btn-ig-chico { width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: white; display: flex; justify-content: center; align-items: center; text-decoration: none; font-size: 20px; box-shadow: 0 4px 10px rgba(220, 39, 67, 0.4); }
 
+        /* Popup Match Mutuo (Confeti y Magia) */
         #modal-match-mutuo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; text-align: center; padding: 30px; animation: fadeIn 0.3s ease; }
-        .match-logo-animado { font-size: 80px; margin-bottom: 20px; animation: latido-fuego 1.5s infinite; filter: drop-shadow(0 0 20px #ff4500); }
-        .match-texto-destacado { font-size: 35px; font-style: italic; font-weight: 900; background: linear-gradient(45deg, #1ce598, #00c6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(28, 229, 152, 0.3)); letter-spacing: -1px; }
-        .btn-ig-gigante { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: white; text-decoration: none; padding: 20px; border-radius: 30px; font-weight: 900; font-size: 16px; margin-top: 30px; width: 100%; box-sizing: border-box; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(220, 39, 67, 0.4); }
+        .match-logo-animado { font-size: 80px; margin-bottom: 20px; animation: latido-fuego 1.5s infinite; filter: drop-shadow(0 0 20px #ff4500); z-index: 2; }
+        .match-texto-destacado { font-size: 35px; font-style: italic; font-weight: 900; background: linear-gradient(45deg, var(--tinder-rosa), var(--tinder-naranja)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.3)); letter-spacing: -1px; z-index: 2; }
+        .btn-ig-gigante { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: white; text-decoration: none; padding: 20px; border-radius: 30px; font-weight: 900; font-size: 16px; margin-top: 30px; width: 100%; box-sizing: border-box; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 10px 20px rgba(220, 39, 67, 0.4); z-index: 2; }
+        
+        .confetti { position: absolute; width: 10px; height: 10px; background-color: #f00; z-index: 1; animation: fall 3s linear forwards; opacity: 0; }
+        @keyframes fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
         @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
 
+    <!-- PANTALLA LOGIN -->
     <div class="pantalla active" id="pantalla-login">
         <div class="contenido-centrado">
             <h1 class="titulo-seccion">MATCH <span style="color:var(--tinder-rosa)">X</span></h1>
@@ -104,10 +122,11 @@
         </div>
     </div>
 
+    <!-- PANTALLA ONBOARDING (Cero Fricción) -->
     <div class="pantalla" id="pantalla-onboarding">
         <div class="contenido-centrado">
             <h1 class="titulo-seccion">Tu Perfil</h1>
-            <p class="subtitulo">Completá estos datos para aparecer en el radar con tu mejor foto.</p>
+            <p class="subtitulo">Completá estos datos. El sistema buscará tu foto de Instagram automáticamente.</p>
             
             <div class="input-box">
                 <span>@</span>
@@ -123,13 +142,14 @@
                 </select>
             </div>
 
-            <button class="btn-principal" onclick="activarPerfil()">Activar Radar</button>
+            <button class="btn-principal" id="btn-activar" onclick="activarPerfil()">Activar Radar</button>
         </div>
     </div>
 
+    <!-- PANTALLA MATCH Y SWIPE -->
     <div class="pantalla" id="pantalla-match">
         <div class="navbar">
-            <div class="nav-izq"><div style="width:40px;"></div></div> <!-- Espacio vacío para centrar logo -->
+            <div class="nav-izq"><div style="width:40px;"></div></div> 
             <div class="logo-nav">MATCH X</div>
             <div class="nav-der"><button class="btn-fuego activo" id="btn-inbox-fuego" onclick="irAMatches()">🔥</button></div>
         </div>
@@ -154,6 +174,7 @@
                 <img src="" class="foto-perfil" id="foto-1" alt="Perfil">
                 <div class="sello nope" id="sello-next">NEXT</div>
                 <div class="sello barro" id="sello-barro">BARRO</div>
+                <div class="sello super" id="sello-super">SÚPER BARRO</div>
                 <div class="info-perfil">
                     <h2 id="nombre-1">@usuario</h2>
                     <p><span class="dot-online" id="status-dot-1"></span> <span id="status-txt-1">Online</span></p>
@@ -163,31 +184,34 @@
         </div>
 
         <div class="controles" id="botones-accion" style="display:none;">
-            <button class="btn-control btn-star" onclick="hapticPing()">⭐</button>
+            <button class="btn-control btn-star" onclick="ejecutarBotonAnimacion('superlike')">⭐</button>
             <button class="btn-control btn-rechazo" onclick="ejecutarBotonAnimacion('pass')">✕</button>
             <button class="btn-control btn-corazon" onclick="ejecutarBotonAnimacion('like')">♥</button>
         </div>
     </div>
 
+    <!-- PANTALLA BANDEJA DE MATCHES -->
     <div class="pantalla" id="pantalla-mis-matches">
         <div class="navbar">
-            <div class="nav-izq"><button class="btn-fuego" style="font-size:20px; opacity:0.8; filter:none;" onclick="irAPantalla('pantalla-match')">◀</button></div>
+            <div class="nav-izq"><button class="btn-fuego" style="font-size:24px; opacity:0.8; filter:none;" onclick="irAPantalla('pantalla-match')">◀</button></div>
             <div class="logo-nav" style="font-size: 20px; color:white; background:none; -webkit-text-fill-color: white;">Tus Matches</div>
             <div class="nav-der"><div style="width:40px;"></div></div>
         </div>
         <div id="lista-matches"></div>
     </div>
 
+    <!-- POPUP MATCH MUTUO -->
     <div id="modal-match-mutuo">
         <div class="match-logo-animado">🔥</div>
         <div class="match-texto-destacado">¡ES UN MATCH!</div>
-        <p style="color: #fff; font-size: 20px; font-weight: bold; margin-bottom: 5px;" id="txt-match-nombre">La onda es mutua con @usuario</p>
-        <p style="color: #888; font-size: 15px; margin-bottom: 30px;">Hablale directo al chat de Instagram.</p>
+        <p style="color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 5px; z-index: 2;" id="txt-match-nombre">La onda es mutua con @usuario</p>
+        <p style="color: #ccc; font-size: 14px; margin-bottom: 30px; z-index: 2;">La noche recién empieza. Hablale al chat.</p>
         <a id="link-instagram-popup" href="#" target="_blank" class="btn-ig-gigante">ABRIR INSTAGRAM</a>
-        <button style="background:transparent; color:#888; border:none; margin-top: 25px; padding: 15px; font-size: 14px; font-weight: bold; text-transform: uppercase;" onclick="cerrarModalMatch()">Seguir deslizando</button>
+        <button style="background:transparent; color:#888; border:none; margin-top: 25px; padding: 15px; font-size: 14px; font-weight: bold; text-transform: uppercase; z-index: 2;" onclick="cerrarModalMatch()">Seguir deslizando</button>
     </div>
 
     <script>
+        // CONFIGURACIÓN DE SUPABASE
         const supabaseUrl = 'https://vogizootbnhvbeugroyr.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZvZ2l6b290Ym5odmJldWdyb3lyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MzY3MTAsImV4cCI6MjA5MDIxMjcxMH0.7dNueBWtcx0nUHjligZl4hS72qqlswuYw0WYR0QeVhI';
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -196,10 +220,10 @@
         let listaCandidatos = [];
         let indiceActual = 0;
 
+        /* EFECTOS HÁPTICOS (VIBRACIÓN EN CELULAR) */
         function hapticTap() { if(navigator.vibrate) navigator.vibrate(20); }
         function hapticSwipe() { if(navigator.vibrate) navigator.vibrate([40]); }
         function hapticMatch() { if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]); }
-        function hapticPing() { if(navigator.vibrate) navigator.vibrate(10); alert("⭐ Función Súper Like próximamente"); }
 
         function irAPantalla(id) {
             document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('active'));
@@ -235,14 +259,22 @@
             hapticTap();
             const ig = document.getElementById('input-ig').value.trim();
             const interes = document.getElementById('select-interes').value;
+            
             if(!ig || !interes) return alert("Faltan datos para armar tu perfil.");
+            
+            document.getElementById('btn-activar').innerText = "Activando...";
 
-            const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes });
+            // Guardamos el perfil. Pasamos "" como foto para que la Base de Datos no tire error por el script anterior.
+            const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes, p_foto: "" });
+            
             if(!error) {
                 usuarioActual.instagram = ig;
                 usuarioActual.busca_match = true;
                 iniciarTinder();
-            } else alert("Error de conexión.");
+            } else { 
+                alert("Error de conexión al subir el perfil.");
+                document.getElementById('btn-activar').innerText = "Activar Radar";
+            }
         }
 
         function iniciarTinder() {
@@ -260,9 +292,18 @@
             }
         }
 
-        function getAvatarUrl(instagram, nombre) {
-            const igClean = instagram.replace('@', '').trim();
-            return `https://unavatar.io/instagram/${igClean}?fallback=https://api.dicebear.com/7.x/initials/svg?seed=${nombre}&backgroundColor=111111&textColor=ec4899`;
+        /* MAGIA: CARGADOR DE IMÁGENES ANTI-BLOQUEO */
+        function cargarImagenSegura(imgElement, username, nombre) {
+            const igClean = username.replace('@', '').trim();
+            
+            // Si Meta bloquea la foto, saltamos instantáneamente al Avatar Premium.
+            imgElement.onerror = function() {
+                this.onerror = null; // Evita bucle
+                this.src = `https://api.dicebear.com/7.x/initials/svg?seed=${nombre}&backgroundColor=111111&textColor=ec4899&fontSize=40&fontWeight=bold`;
+            };
+            
+            // Le forzamos el fallback=false a la API. Así nos aseguramos de que si falla, salte al onerror.
+            imgElement.src = `https://unavatar.io/instagram/${igClean}?fallback=false`;
         }
 
         function prepararTarjetas() {
@@ -272,9 +313,10 @@
             const radar = document.getElementById('radar-vacio');
 
             t1.style.transition = 'none';
-            t1.style.transform = 'translateX(0) rotate(0deg)';
+            t1.style.transform = 'translateX(0) translateY(0) rotate(0deg)';
             document.getElementById('sello-barro').style.opacity = 0;
             document.getElementById('sello-next').style.opacity = 0;
+            document.getElementById('sello-super').style.opacity = 0;
 
             if (indiceActual >= listaCandidatos.length) {
                 t1.style.display = 'none';
@@ -291,22 +333,17 @@
             document.getElementById('btn-inbox-fuego').classList.add('activo');
 
             const c1 = listaCandidatos[indiceActual];
-            document.getElementById('foto-1').src = getAvatarUrl(c1.instagram, c1.nombre);
+            cargarImagenSegura(document.getElementById('foto-1'), c1.instagram, c1.nombre);
             document.getElementById('nombre-1').innerHTML = `@${c1.instagram.replace('@','').toLowerCase()}`;
             
-            const isOnline1 = Math.random() > 0.2; 
+            const isOnline1 = Math.random() > 0.3; 
             document.getElementById('status-dot-1').className = isOnline1 ? 'dot-online' : 'dot-offline';
-            document.getElementById('status-txt-1').innerText = isOnline1 ? 'Online' : 'Offline';
+            document.getElementById('status-txt-1').innerText = isOnline1 ? 'Online' : 'Desconectado/a';
 
             if (indiceActual + 1 < listaCandidatos.length) {
                 const c2 = listaCandidatos[indiceActual + 1];
-                document.getElementById('foto-2').src = getAvatarUrl(c2.instagram, c2.nombre);
+                cargarImagenSegura(document.getElementById('foto-2'), c2.instagram, c2.nombre);
                 document.getElementById('nombre-2').innerHTML = `@${c2.instagram.replace('@','').toLowerCase()}`;
-                
-                const isOnline2 = Math.random() > 0.2;
-                document.getElementById('status-dot-2').className = isOnline2 ? 'dot-online' : 'dot-offline';
-                document.getElementById('status-txt-2').innerText = isOnline2 ? 'Online' : 'Offline';
-                
                 t2.style.opacity = 1;
                 t2.style.transform = 'scale(0.95) translateY(15px)';
             } else {
@@ -318,8 +355,8 @@
 
         function activarGestos(card) {
             let isDragging = false;
-            let startX = 0, currentTranslate = 0;
-            let lastTap = 0; // Para el doble toque
+            let startX = 0, startY = 0, currentTranslateX = 0, currentTranslateY = 0;
+            let lastTap = 0; 
             const screenWidth = window.innerWidth;
             const t2 = document.getElementById('tarjeta-2');
 
@@ -327,8 +364,8 @@
             card.parentNode.replaceChild(nuevaCard, card);
             const activeCard = document.getElementById('tarjeta-1');
 
-            const startDrag = (x, isTouch, e) => {
-                // Lógica de Doble Toque (Double Tap)
+            const startDrag = (x, y, isTouch, e) => {
+                // DOBLE TOQUE (DOUBLE TAP) -> DA BARRO AUTOMÁTICO
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTap;
                 if (tapLength < 300 && tapLength > 0) {
@@ -338,53 +375,70 @@
                 }
                 lastTap = currentTime;
 
-                isDragging = true; startX = x;
+                isDragging = true; startX = x; startY = y;
                 activeCard.style.transition = 'none';
                 t2.style.transition = 'none';
             };
 
-            const dragMove = (x) => {
+            const dragMove = (x, y) => {
                 if(!isDragging) return;
-                currentTranslate = x - startX;
-                const rotate = currentTranslate * 0.05;
-                activeCard.style.transform = `translateX(${currentTranslate}px) rotate(${rotate}deg)`;
+                currentTranslateX = x - startX;
+                currentTranslateY = y - startY;
+                const rotate = currentTranslateX * 0.05;
                 
-                const opacity = Math.min(Math.abs(currentTranslate) / (screenWidth / 3), 1);
-                if(currentTranslate > 0) {
-                    document.getElementById('sello-barro').style.opacity = opacity;
-                    document.getElementById('sello-next').style.opacity = 0;
-                } else {
-                    document.getElementById('sello-next').style.opacity = opacity;
+                activeCard.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) rotate(${rotate}deg)`;
+                
+                const opacityX = Math.min(Math.abs(currentTranslateX) / (screenWidth / 3), 1);
+                const opacityY = Math.min(Math.abs(currentTranslateY) / (screenWidth / 3), 1);
+
+                if (currentTranslateY < -100 && Math.abs(currentTranslateX) < 100) {
+                    document.getElementById('sello-super').style.opacity = opacityY;
                     document.getElementById('sello-barro').style.opacity = 0;
+                    document.getElementById('sello-next').style.opacity = 0;
+                } else if (currentTranslateX > 0) {
+                    document.getElementById('sello-barro').style.opacity = opacityX;
+                    document.getElementById('sello-next').style.opacity = 0;
+                    document.getElementById('sello-super').style.opacity = 0;
+                } else {
+                    document.getElementById('sello-next').style.opacity = opacityX;
+                    document.getElementById('sello-barro').style.opacity = 0;
+                    document.getElementById('sello-super').style.opacity = 0;
                 }
 
-                const scale = 0.95 + (opacity * 0.05);
-                const translateY = 15 - (opacity * 15);
+                const scale = 0.95 + (Math.max(opacityX, opacityY) * 0.05);
+                const translateY = 15 - (Math.max(opacityX, opacityY) * 15);
                 if(t2.style.opacity > 0) t2.style.transform = `scale(${scale}) translateY(${translateY}px)`;
             };
 
             const endDrag = () => {
                 if(!isDragging) return;
                 isDragging = false;
-                const releaseThreshold = screenWidth * 0.3;
+                const releaseThresholdX = screenWidth * 0.3;
+                const releaseThresholdY = -150; 
+                
                 activeCard.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
                 t2.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
-                if (currentTranslate > releaseThreshold) ejecutarDecision('like', screenWidth * 1.5);
-                else if (currentTranslate < -releaseThreshold) ejecutarDecision('pass', -screenWidth * 1.5);
-                else {
-                    activeCard.style.transform = 'translateX(0) rotate(0deg)';
+                if (currentTranslateY < releaseThresholdY && Math.abs(currentTranslateX) < releaseThresholdX) {
+                    ejecutarDecision('superlike', 0, -1000);
+                } else if (currentTranslateX > releaseThresholdX) {
+                    ejecutarDecision('like', screenWidth * 1.5, 0);
+                } else if (currentTranslateX < -releaseThresholdX) {
+                    ejecutarDecision('pass', -screenWidth * 1.5, 0);
+                } else {
+                    activeCard.style.transform = 'translate(0, 0) rotate(0deg)';
                     document.getElementById('sello-barro').style.opacity = 0;
                     document.getElementById('sello-next').style.opacity = 0;
+                    document.getElementById('sello-super').style.opacity = 0;
                     if(t2.style.opacity > 0) t2.style.transform = 'scale(0.95) translateY(15px)';
                 }
             };
 
-            activeCard.addEventListener('touchstart', e => startDrag(e.touches[0].clientX, true, e));
-            activeCard.addEventListener('touchmove', e => dragMove(e.touches[0].clientX));
+            activeCard.addEventListener('touchstart', e => startDrag(e.touches[0].clientX, e.touches[0].clientY, true, e));
+            activeCard.addEventListener('touchmove', e => dragMove(e.touches[0].clientX, e.touches[0].clientY));
             activeCard.addEventListener('touchend', endDrag);
-            activeCard.addEventListener('mousedown', e => startDrag(e.clientX, false, e));
-            activeCard.addEventListener('mousemove', e => dragMove(e.clientX));
+            activeCard.addEventListener('mousedown', e => startDrag(e.clientX, e.clientY, false, e));
+            activeCard.addEventListener('mousemove', e => dragMove(e.clientX, e.clientY));
             window.addEventListener('mouseup', endDrag);
         }
 
@@ -394,30 +448,50 @@
             const screenWidth = window.innerWidth;
             activeCard.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
             
-            if(accion === 'like') {
+            if (accion === 'superlike') {
+                activeCard.style.transform = `translateY(-1000px) rotate(0deg)`;
+                document.getElementById('sello-super').style.opacity = 1;
+            } else if (accion === 'like') {
                 activeCard.style.transform = `translateX(${screenWidth}px) rotate(30deg)`;
                 document.getElementById('sello-barro').style.opacity = 1;
             } else {
                 activeCard.style.transform = `translateX(-${screenWidth}px) rotate(-30deg)`;
                 document.getElementById('sello-next').style.opacity = 1;
             }
-            setTimeout(() => procesarCruce(accion), 300);
+            setTimeout(() => procesarCruce(accion), 350);
         }
 
-        function ejecutarDecision(accion, translateX) {
+        function ejecutarDecision(accion, translateX, translateY) {
             hapticSwipe();
-            document.getElementById('tarjeta-1').style.transform = `translateX(${translateX}px) rotate(${translateX * 0.05}deg)`;
-            setTimeout(() => procesarCruce(accion), 300);
+            document.getElementById('tarjeta-1').style.transform = `translate(${translateX}px, ${translateY}px) rotate(${translateX * 0.05}deg)`;
+            setTimeout(() => procesarCruce(accion), 350);
         }
 
         async function procesarCruce(accion) {
             const candidato = listaCandidatos[indiceActual];
-            if (accion === 'like') {
-                const { data: esMatch } = await client.rpc('dar_like', { mi_id: usuarioActual.id, objetivo_id: candidato.id });
+            if (accion === 'like' || accion === 'superlike') {
+                const { data: esMatch } = await client.rpc('registrar_interaccion', { mi_id: usuarioActual.id, objetivo_id: candidato.id, tipo_accion: accion });
                 if (esMatch) dispararPantallaMatch(candidato);
+            } else {
+                client.rpc('registrar_interaccion', { mi_id: usuarioActual.id, objetivo_id: candidato.id, tipo_accion: 'pass' });
             }
             indiceActual++;
             prepararTarjetas();
+        }
+
+        /* EFECTO LLUVIA DE CONFETI */
+        function crearConfeti() {
+            const colores = ['#ec4899', '#f43f5e', '#fbbf24', '#ffffff'];
+            for(let i=0; i<50; i++) {
+                let confeti = document.createElement('div');
+                confeti.className = 'confetti';
+                confeti.style.left = Math.random() * 100 + 'vw';
+                confeti.style.backgroundColor = colores[Math.floor(Math.random() * colores.length)];
+                confeti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                confeti.style.animationDelay = (Math.random() * 0.5) + 's';
+                document.getElementById('modal-match-mutuo').appendChild(confeti);
+                setTimeout(() => confeti.remove(), 4000);
+            }
         }
 
         function dispararPantallaMatch(candidato) {
@@ -425,6 +499,7 @@
             document.getElementById('txt-match-nombre').innerText = `La onda es mutua con @${candidato.instagram.replace('@','').toLowerCase()}`;
             document.getElementById('link-instagram-popup').href = `https://instagram.com/${candidato.instagram.replace('@','')}`;
             document.getElementById('modal-match-mutuo').style.display = 'flex';
+            crearConfeti();
         }
 
         function cerrarModalMatch() { document.getElementById('modal-match-mutuo').style.display = 'none'; }
@@ -435,15 +510,15 @@
             const lista = document.getElementById('lista-matches');
             lista.innerHTML = "<p style='text-align: center; color: #888; margin-top:50px;'>Cargando chats...</p>";
 
-            const { data: likesDados } = await client.from('likes').select('para_ticket_id').eq('de_ticket_id', usuarioActual.id);
-            const { data: likesRecibidos } = await client.from('likes').select('de_ticket_id').eq('para_ticket_id', usuarioActual.id);
+            const { data: interaccionesDadas } = await client.from('likes').select('para_ticket_id, accion').eq('de_ticket_id', usuarioActual.id).in('accion', ['like', 'superlike']);
+            const { data: interaccionesRecibidas } = await client.from('likes').select('de_ticket_id, accion').eq('para_ticket_id', usuarioActual.id).in('accion', ['like', 'superlike']);
 
-            if (!likesDados || !likesRecibidos) { lista.innerHTML = "<p style='text-align: center; color:#888;'>Sin matches.</p>"; return; }
+            if (!interaccionesDadas || !interaccionesRecibidas) { lista.innerHTML = "<p style='text-align: center; color:#888;'>Sin matches.</p>"; return; }
 
-            const idsDados = likesDados.map(l => l.para_ticket_id);
-            const idsMutuos = likesRecibidos.filter(l => idsDados.includes(l.de_ticket_id)).map(l => l.de_ticket_id);
+            const idsDados = interaccionesDadas.map(l => l.para_ticket_id);
+            const mutuos = interaccionesRecibidas.filter(l => idsDados.includes(l.de_ticket_id));
 
-            if (idsMutuos.length === 0) {
+            if (mutuos.length === 0) {
                 lista.innerHTML = `
                     <div style="text-align:center; margin-top:50px;">
                         <div class="radar" style="margin: 0 auto; background:#333; margin-bottom:20px;"></div>
@@ -454,16 +529,28 @@
                 return;
             }
 
-            const { data: matches } = await client.from('entradas').select('nombre, instagram').in('id', idsMutuos);
+            const idsMutuos = mutuos.map(l => l.de_ticket_id);
+            const { data: matches } = await client.from('entradas').select('id, nombre, instagram').in('id', idsMutuos);
             
             lista.innerHTML = "";
             matches.forEach(m => {
+                const interaccionRecibida = mutuos.find(l => l.de_ticket_id === m.id);
+                const interaccionDada = interaccionesDadas.find(l => l.para_ticket_id === m.id);
+                const esSuperMatch = (interaccionRecibida && interaccionRecibida.accion === 'superlike') || (interaccionDada && interaccionDada.accion === 'superlike');
+                
+                const claseItem = esSuperMatch ? 'match-item super-match' : 'match-item';
+
+                // Generamos la img con la misma lógica segura
+                const igLimpio = m.instagram.replace('@', '').trim();
+                const fotoUrl = `https://unavatar.io/instagram/${igLimpio}?fallback=false`;
+                const avatarPremium = `https://api.dicebear.com/7.x/initials/svg?seed=${m.nombre}&backgroundColor=111111&textColor=ec4899`;
+
                 lista.innerHTML += `
-                    <div class="match-item">
-                        <img src="${getAvatarUrl(m.instagram, m.nombre)}" class="match-avatar" alt="${m.nombre}">
+                    <div class="${claseItem}">
+                        <img src="${fotoUrl}" onerror="this.onerror=null; this.src='${avatarPremium}';" class="match-avatar" alt="${m.nombre}">
                         <div class="match-info">
-                            <h3>@${m.instagram.replace('@','').toLowerCase()}</h3>
-                            <p>${m.nombre}</p>
+                            <h3 style="${esSuperMatch ? 'color: var(--tinder-oro);' : ''}">@${m.instagram.replace('@','').toLowerCase()} ${esSuperMatch ? '⭐' : ''}</h3>
+                            <p style="${esSuperMatch ? 'color: #888;' : ''}">${m.nombre}</p>
                         </div>
                         <a href="https://instagram.com/${m.instagram.replace('@','')}" target="_blank" class="btn-ig-chico">💬</a>
                     </div>
