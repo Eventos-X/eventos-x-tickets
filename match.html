@@ -3,147 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Eventos X - Modo Match</title>
+    <title>Tinder X - La Fiesta</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --rosa: #ec4899; --verde: #10b981; --rojo: #ef4444; --fondo: #050505; --caja: #121212; --texto: #ffffff; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--fondo); color: var(--texto); margin: 0; padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; touch-action: none; }
+        :root { 
+            --tinder-rosa: #fd297b; --tinder-naranja: #ff655b; --tinder-verde: #1ce598; --tinder-rojo: #fd5c63; 
+            --fondo: #000000; --caja: #111111; --texto: #ffffff; 
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--fondo); color: var(--texto); margin: 0; padding: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100dvh; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         
         /* Contenedores Principales */
-        .pantalla { display: none; width: 100%; max-width: 420px; height: 100%; flex-direction: column; position: relative; background: var(--fondo); box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .pantalla { display: none; width: 100%; max-width: 420px; height: 100dvh; flex-direction: column; position: relative; background: var(--fondo); }
         .pantalla.active { display: flex; }
 
-        /* Encabezado */
-        .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 1px; }
-        .header h1 span { color: var(--rosa); }
-        .btn-historial { background: #1a1a1a; border: 1px solid #333; color: var(--rosa); padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; }
+        /* Top Nav (Estilo Tinder) */
+        .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; z-index: 10; }
+        .nav-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; color: #555; background: transparent; border: none; cursor: pointer; transition: 0.2s; }
+        .nav-icon.active { color: var(--tinder-rosa); }
+        .logo-nav { font-size: 24px; font-weight: 900; background: linear-gradient(45deg, var(--tinder-rosa), var(--tinder-naranja)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -1px; }
 
-        /* Formularios y Botones */
-        .contenido-centrado { flex: 1; padding: 30px; display: flex; flex-direction: column; justify-content: center; }
-        .titulo-seccion { font-size: 24px; margin-bottom: 10px; font-weight: 800; }
-        .subtitulo { color: #888; font-size: 14px; margin-bottom: 30px; line-height: 1.5; }
+        /* Inputs y Botones Premium */
+        .contenido-centrado { flex: 1; padding: 30px; display: flex; flex-direction: column; justify-content: center; z-index: 2; }
+        .titulo-seccion { font-size: 32px; margin-bottom: 10px; font-weight: 800; text-align: center; }
+        .subtitulo { color: #888; font-size: 15px; margin-bottom: 40px; text-align: center; line-height: 1.5; }
         .input-box { position: relative; margin-bottom: 25px; }
-        .input-box input { width: 100%; padding: 18px 20px 18px 45px; background: var(--caja); border: 2px solid #222; color: white; border-radius: 15px; font-size: 16px; box-sizing: border-box; transition: 0.3s; outline: none; }
-        .input-box input:focus { border-color: var(--rosa); }
-        .input-box span { position: absolute; left: 18px; top: 18px; color: #666; font-size: 16px; font-weight: bold; }
+        .input-box input, .input-box select { width: 100%; padding: 20px 20px 20px 50px; background: #1a1a1a; border: 2px solid #222; color: white; border-radius: 20px; font-size: 16px; font-weight: 600; box-sizing: border-box; transition: 0.3s; outline: none; appearance: none; }
+        .input-box input:focus, .input-box select:focus { border-color: var(--tinder-rosa); background: #000; box-shadow: 0 0 20px rgba(253, 41, 123, 0.2); }
+        .input-box span { position: absolute; left: 20px; top: 20px; color: #888; font-size: 18px; font-weight: bold; }
+        .btn-principal { background: linear-gradient(45deg, var(--tinder-rosa), var(--tinder-naranja)); color: white; border: none; padding: 20px; border-radius: 30px; font-size: 16px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; box-shadow: 0 10px 20px rgba(253, 41, 123, 0.3); transition: 0.2s; }
+        .btn-principal:active { transform: scale(0.95); }
+
+        /* Área de Swipe (El Stack de Tarjetas) */
+        .swipe-container { flex: 1; position: relative; display: flex; justify-content: center; align-items: center; padding: 10px; perspective: 1000px; }
         
-        /* Selectores de Preferencia Visuales */
-        .opciones-grid { display: flex; gap: 10px; margin-bottom: 30px; }
-        .btn-opcion { flex: 1; background: var(--caja); border: 2px solid #222; color: #888; padding: 15px 10px; border-radius: 15px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .btn-opcion.seleccionado { border-color: var(--rosa); color: var(--rosa); background: rgba(236, 72, 153, 0.1); }
+        .tarjeta-wrapper { position: absolute; width: calc(100% - 30px); height: calc(100% - 20px); max-height: 600px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); overflow: hidden; will-change: transform; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         
-        .btn-principal { background: var(--rosa); color: white; border: none; padding: 18px; border-radius: 15px; font-size: 16px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; width: 100%; box-shadow: 0 4px 15px rgba(236,72,153,0.3); }
+        /* La tarjeta activa (al frente) y la que sigue (atrás) */
+        #tarjeta-1 { z-index: 2; cursor: grab; }
+        #tarjeta-2 { z-index: 1; transform: scale(0.95) translateY(15px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+        
+        /* Inicial Gigante en el fondo */
+        .inicial-fondo { font-size: 150px; font-weight: 900; color: rgba(255,255,255,0.15); position: absolute; top: 40%; transform: translateY(-50%); }
 
-        /* Área de Swipe (Estilo Tinder) */
-        .swipe-container { flex: 1; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .tarjeta { position: absolute; width: calc(100% - 40px); height: calc(100% - 40px); max-height: 500px; background: var(--caja); border: 1px solid #333; border-radius: 20px; display: flex; flex-direction: column; justify-content: flex-end; padding: 30px; box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.8); cursor: grab; transition: transform 0.3s ease; user-select: none; }
-        .tarjeta h2 { margin: 0 0 5px 0; font-size: 32px; font-weight: 800; }
-        .tarjeta p { margin: 0; color: var(--rosa); font-size: 16px; font-weight: bold; }
-        .sello { position: absolute; top: 40px; padding: 5px 15px; border: 4px solid; border-radius: 10px; font-size: 30px; font-weight: 900; opacity: 0; text-transform: uppercase; z-index: 10; }
-        .sello.like { right: 30px; color: var(--verde); border-color: var(--verde); transform: rotate(15deg); }
-        .sello.nope { left: 30px; color: var(--rojo); border-color: var(--rojo); transform: rotate(-15deg); }
+        /* Glassmorphism (Vidrio) para la info de abajo */
+        .info-perfil { position: absolute; bottom: 0; left: 0; width: 100%; padding: 30px 20px 25px 20px; background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) 60%, transparent 100%); box-sizing: border-box; text-align: left; }
+        .info-perfil h2 { margin: 0; font-size: 32px; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+        .dot-online { width: 10px; height: 10px; background: var(--tinder-verde); border-radius: 50%; box-shadow: 0 0 10px var(--tinder-verde); }
+        .info-perfil p { margin: 5px 0 0 0; color: #ccc; font-size: 15px; display: flex; align-items: center; gap: 5px; }
 
-        /* Controles Inferiores (Botones X y Corazón) */
-        .controles { padding: 20px; display: flex; justify-content: center; gap: 20px; padding-bottom: 40px; }
-        .btn-control { width: 70px; height: 70px; border-radius: 50%; border: none; font-size: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; }
-        .btn-rechazo { background: #1a1a1a; color: var(--rojo); border: 2px solid #333; }
-        .btn-corazon { background: #1a1a1a; color: var(--verde); border: 2px solid #333; }
-        .btn-control:active { transform: scale(0.9); }
+        /* Sellos (LIKE / NOPE) */
+        .sello { position: absolute; top: 40px; padding: 8px 20px; border: 4px solid; border-radius: 10px; font-size: 35px; font-weight: 900; opacity: 0; text-transform: uppercase; z-index: 10; letter-spacing: 2px; }
+        .sello.like { right: 30px; color: var(--tinder-verde); border-color: var(--tinder-verde); transform: rotate(15deg); }
+        .sello.nope { left: 30px; color: var(--tinder-rojo); border-color: var(--tinder-rojo); transform: rotate(-15deg); }
 
-        /* Pantalla Mis Matches */
-        #lista-matches { flex: 1; overflow-y: auto; padding: 20px; }
-        .match-item { display: flex; justify-content: space-between; align-items: center; background: var(--caja); padding: 20px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #222; }
-        .match-info h3 { margin: 0 0 5px 0; font-size: 18px; }
-        .match-info p { margin: 0; color: #888; font-size: 13px; }
-        .btn-ig-chico { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: white; text-decoration: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; font-size: 12px; }
+        /* Estado Vacío (Efecto Radar) */
+        .radar-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; opacity: 0; transition: opacity 0.5s; z-index: 0; position: absolute; width: 100%; }
+        .radar-container.visible { opacity: 1; }
+        .radar { width: 80px; height: 80px; border-radius: 50%; background: var(--tinder-rosa); position: relative; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+        .radar::before, .radar::after { content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--tinder-rosa); animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        .radar::after { animation-delay: 1s; }
+        @keyframes ping { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
 
-        /* Notificaciones Elegantes (Toasts) */
-        #toast { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: var(--rojo); color: white; padding: 15px 30px; border-radius: 30px; font-weight: bold; font-size: 14px; box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4); transition: top 0.4s ease; z-index: 9999; }
-        #toast.show { top: 20px; }
+        /* Botones de Acción (Abajo) */
+        .controles { padding: 15px; display: flex; justify-content: space-evenly; align-items: center; padding-bottom: 30px; z-index: 10; }
+        .btn-control { width: 65px; height: 65px; border-radius: 50%; border: none; font-size: 28px; display: flex; justify-content: center; align-items: center; cursor: pointer; background: #111; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: 0.1s; }
+        .btn-rechazo { color: var(--tinder-rojo); }
+        .btn-corazon { color: var(--tinder-verde); }
+        .btn-star { width: 50px; height: 50px; font-size: 20px; color: #3b82f6; } /* Adorno VIP */
+        .btn-control:active { transform: scale(0.85); }
 
-        /* Popup Match Gigante */
-        #modal-match-mutuo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; text-align: center; padding: 30px; }
-        .match-titulo { font-size: 40px; color: var(--rosa); margin-bottom: 10px; font-style: italic; font-weight: 900; letter-spacing: 2px; }
-        .btn-ig-gigante { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: white; text-decoration: none; padding: 20px 40px; border-radius: 15px; font-weight: bold; font-size: 18px; margin-top: 30px; width: 100%; box-sizing: border-box; display: inline-block; }
+        /* Mis Matches Inbox */
+        #lista-matches { flex: 1; overflow-y: auto; padding: 10px 20px; }
+        .match-item { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 15px 20px; border-radius: 20px; margin-bottom: 12px; transition: 0.2s; }
+        .match-item:active { transform: scale(0.98); background: #222; }
+        .match-avatar { width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #4facfe, #00f2fe); display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: bold; margin-right: 15px; }
+        .match-info { flex: 1; }
+        .match-info h3 { margin: 0 0 3px 0; font-size: 17px; }
+        .match-info p { margin: 0; color: var(--tinder-rosa); font-size: 13px; font-weight: bold; }
+        .btn-ig-chico { width: 40px; height: 40px; border-radius: 50%; background: #222; color: white; display: flex; justify-content: center; align-items: center; text-decoration: none; font-size: 18px; }
+
+        /* Modal Match Mutuo (Tinder Style) */
+        #modal-match-mutuo { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; flex-direction: column; text-align: center; padding: 30px; animation: fadeIn 0.3s ease; }
+        .match-logo { font-size: 50px; font-style: italic; font-weight: 900; background: linear-gradient(45deg, #1ce598, #00c6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 40px; filter: drop-shadow(0 0 15px rgba(28, 229, 152, 0.4)); letter-spacing: -2px; }
+        .avatares-match { display: flex; justify-content: center; margin-bottom: 40px; position: relative; }
+        .avatares-match .circulo { width: 100px; height: 100px; border-radius: 50%; border: 4px solid #000; display: flex; justify-content: center; align-items: center; font-size: 40px; font-weight: 900; background: linear-gradient(135deg, var(--tinder-rosa), var(--tinder-naranja)); position: absolute; }
+        .btn-ig-gigante { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: white; text-decoration: none; padding: 20px; border-radius: 30px; font-weight: 900; font-size: 16px; margin-top: 30px; width: 100%; box-sizing: border-box; text-transform: uppercase; letter-spacing: 1px; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
 
-    <!-- Toast de Errores -->
-    <div id="toast">Error</div>
-
     <!-- Pantalla 1: Login -->
     <div class="pantalla active" id="pantalla-login">
         <div class="contenido-centrado">
-            <h1 class="titulo-seccion">MATCH <span style="color:var(--rosa)">X</span></h1>
-            <p class="subtitulo">Validá tu identidad con el DNI para entrar a la pista digital.</p>
+            <h1 class="titulo-seccion">EVENTOS <span style="color:var(--tinder-rosa)">X</span></h1>
+            <p class="subtitulo">Ingresá tu DNI para validar que estás en la fiesta y acceder al radar.</p>
             <div class="input-box">
-                <span style="left: 20px;">🆔</span>
+                <span>🆔</span>
                 <input type="tel" id="input-dni" placeholder="Tu DNI (8 números)" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
             </div>
-            <button class="btn-principal" id="btn-login-manual" onclick="loginManual()">Ingresar a la fiesta</button>
+            <button class="btn-principal" id="btn-login-manual" onclick="loginManual()">Entrar a la Pista</button>
         </div>
     </div>
 
-    <!-- Pantalla 2: Onboarding Moderno -->
+    <!-- Pantalla 2: Onboarding (Crear Perfil Rápido) -->
     <div class="pantalla" id="pantalla-onboarding">
         <div class="contenido-centrado">
             <h1 class="titulo-seccion">Tu Perfil</h1>
-            <p class="subtitulo">Para matchear, la gente necesita saber cómo encontrarte en la pista.</p>
+            <p class="subtitulo">Completá estos dos datos para aparecer en el radar del resto.</p>
             
             <div class="input-box">
                 <span>@</span>
                 <input type="text" id="input-ig" placeholder="tu.usuario.ig" oninput="this.value = this.value.replace(/[^a-zA-Z0-9._]/g, '');">
             </div>
-            
-            <p style="font-size: 14px; color: #888; font-weight: bold; margin-bottom: 15px; text-transform: uppercase;">¿Qué estás buscando?</p>
-            <div class="opciones-grid">
-                <button class="btn-opcion" onclick="seleccionarInteres(this, 'Mujeres')">Mujeres</button>
-                <button class="btn-opcion" onclick="seleccionarInteres(this, 'Hombres')">Hombres</button>
-                <button class="btn-opcion" onclick="seleccionarInteres(this, 'Ambos')">Ambos</button>
+            <div class="input-box">
+                <span>🎯</span>
+                <select id="select-interes">
+                    <option value="" disabled selected>¿A quién querés conocer?</option>
+                    <option value="Mujeres">Mujeres</option>
+                    <option value="Hombres">Hombres</option>
+                    <option value="Ambos">Ambos</option>
+                </select>
             </div>
-            <input type="hidden" id="select-interes">
 
             <button class="btn-principal" onclick="activarPerfil()">Activar Radar</button>
         </div>
     </div>
 
-    <!-- Pantalla 3: El Swipe -->
+    <!-- Pantalla 3: Swipe (Tinder Core) -->
     <div class="pantalla" id="pantalla-match">
-        <div class="header">
-            <h1>MATCH <span>X</span></h1>
-            <button class="btn-historial" onclick="abrirMisMatches()">🔥 Mis Matches</button>
+        <div class="navbar">
+            <button class="nav-icon" style="opacity: 0.3;">👤</button>
+            <div class="logo-nav">TINDER X</div>
+            <button class="nav-icon active" onclick="irAMatches()">💬</button>
         </div>
         
         <div class="swipe-container" id="swipe-area">
-            <!-- La tarjeta se genera por JS acá -->
+            
+            <!-- Estado Vacío / Radar -->
+            <div class="radar-container" id="radar-vacio">
+                <div class="radar"><span style="font-size: 30px;">🪩</span></div>
+                <h3 style="margin: 0; font-weight: 800;">Buscando gente...</h3>
+                <p style="color:#888; font-size: 14px; margin-top: 5px;">No hay nadie nuevo a tu alrededor.</p>
+            </div>
+
+            <!-- Tarjeta Atrás -->
+            <div class="tarjeta-wrapper" id="tarjeta-2">
+                <div class="inicial-fondo" id="inicial-2">?</div>
+                <div class="info-perfil">
+                    <h2 id="nombre-2">Nombre</h2>
+                    <p><span class="dot-online"></span> En la pista</p>
+                </div>
+            </div>
+
+            <!-- Tarjeta Frente (Interactiva) -->
+            <div class="tarjeta-wrapper" id="tarjeta-1" style="display:none;">
+                <div class="sello nope" id="sello-nope">NOPE</div>
+                <div class="sello like" id="sello-like">LIKE</div>
+                <div class="inicial-fondo" id="inicial-1">?</div>
+                <div class="info-perfil">
+                    <h2 id="nombre-1">Nombre <span class="dot-online"></span></h2>
+                    <p>📍 A metros tuyo</p>
+                </div>
+            </div>
+            
         </div>
 
         <div class="controles" id="botones-accion" style="display:none;">
-            <button class="btn-control btn-rechazo" onclick="ejecutarAnimacionBoton('pass')">❌</button>
-            <button class="btn-control btn-corazon" onclick="ejecutarAnimacionBoton('like')">❤️</button>
+            <button class="btn-control btn-star" onclick="hapticPing()">⭐</button>
+            <button class="btn-control btn-rechazo" onclick="ejecutarBotonAnimacion('pass')">✕</button>
+            <button class="btn-control btn-corazon" onclick="ejecutarBotonAnimacion('like')">♥</button>
         </div>
     </div>
 
-    <!-- Pantalla 4: Mis Matches (Inbox) -->
+    <!-- Pantalla 4: Mis Matches -->
     <div class="pantalla" id="pantalla-mis-matches">
-        <div class="header">
-            <h1 style="font-size: 18px;">Tus Matches</h1>
-            <button class="btn-historial" style="background: transparent; border: none; color: #888;" onclick="volverAlSwipe()">◀ Volver</button>
+        <div class="navbar">
+            <button class="nav-icon active" onclick="irAPantalla('pantalla-match')">◀</button>
+            <div class="logo-nav" style="font-size: 18px;">Nuevos Matches</div>
+            <button class="nav-icon" style="opacity: 0;">💬</button>
         </div>
         <div id="lista-matches">
-            <p style="text-align: center; color: #666; margin-top: 50px;">Buscando tus cruces...</p>
+            <!-- Rellenado por JS -->
         </div>
     </div>
 
-    <!-- Modal ¡Es un Match! -->
+    <!-- Modal It's a Match -->
     <div id="modal-match-mutuo">
-        <h2 class="match-titulo">IT'S A MATCH</h2>
-        <p style="color: #ccc; font-size: 16px; margin-bottom: 5px;">A esta persona también le gustaste.</p>
-        <p style="color: #888; font-size: 14px;">El momento es ahora, abrí su perfil y mandale un mensaje.</p>
-        <a id="link-instagram-popup" href="#" target="_blank" class="btn-ig-gigante">Abrir Instagram</a>
-        <button style="background:transparent; color:#888; border:none; margin-top: 25px; padding: 10px; font-size: 15px;" onclick="cerrarModalMatch()">Seguir buscando</button>
+        <div class="match-logo">IT'S A MATCH!</div>
+        <div class="avatares-match">
+            <div class="circulo" id="match-mi-inicial" style="left: -70px; z-index: 2;">M</div>
+            <div class="circulo" id="match-su-inicial" style="left: 0px; background: linear-gradient(135deg, #1ce598, #00c6ff); z-index: 1;">X</div>
+        </div>
+        <div style="height: 100px;"></div> <!-- Espaciador -->
+        <p style="color: #fff; font-size: 18px; font-weight: bold;" id="txt-match-nombre">Le gustaste a Nombre</p>
+        <p style="color: #888; font-size: 14px; margin-bottom: 20px;">No la cuelgues. Mandale un mensaje ahora.</p>
+        <a id="link-instagram-popup" href="#" target="_blank" class="btn-ig-gigante">MANDAR MENSAJE</a>
+        <button style="background:transparent; color:#888; border:none; margin-top: 20px; padding: 15px; font-size: 14px; font-weight: bold; text-transform: uppercase;" onclick="cerrarModalMatch()">Volver a jugar</button>
     </div>
 
     <script>
@@ -155,41 +211,43 @@
         let listaCandidatos = [];
         let indiceActual = 0;
 
-        /* --- UTILIDADES --- */
-        function mostrarNotificacion(mensaje) {
-            const toast = document.getElementById('toast');
-            toast.innerText = mensaje;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
+        /* Paleta de gradientes para las tarjetas sin foto */
+        const gradientes = [
+            'linear-gradient(135deg, #FF416C, #FF4B2B)', 'linear-gradient(135deg, #4facfe, #00f2fe)',
+            'linear-gradient(135deg, #f093fb, #f5576c)', 'linear-gradient(135deg, #43e97b, #38f9d7)',
+            'linear-gradient(135deg, #fa709a, #fee140)', 'linear-gradient(135deg, #667eea, #764ba2)'
+        ];
+
+        /* --- MOTOR HÁPTICO (Vibración) --- */
+        function hapticTap() { if(navigator.vibrate) navigator.vibrate(20); }
+        function hapticSwipe() { if(navigator.vibrate) navigator.vibrate([40]); }
+        function hapticMatch() { if(navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]); }
+        function hapticPing() { if(navigator.vibrate) navigator.vibrate(10); alert("⭐ Función Súper Like próximamente"); }
 
         function irAPantalla(id) {
             document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        /* --- LOGIN & ONBOARDING --- */
+        /* --- INICIO Y LOGIN --- */
         window.onload = async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const ticketId = urlParams.get('id');
-            if (ticketId) {
-                irAPantalla('pantalla-login');
-                await validarUsuario(ticketId);
-            }
+            const ticketId = new URLSearchParams(window.location.search).get('id');
+            if (ticketId) await validarUsuario(ticketId);
         };
 
         async function loginManual() {
             const dniVal = document.getElementById('input-dni').value.trim();
-            if(dniVal.length !== 8) { mostrarNotificacion("El DNI debe tener 8 números."); return; }
-            document.getElementById('btn-login-manual').innerText = "Buscando...";
+            if(dniVal.length !== 8) return alert("Ingresá un DNI de 8 números.");
+            document.getElementById('btn-login-manual').innerText = "Verificando Puerta...";
             await validarUsuario(dniVal);
         }
 
         async function validarUsuario(identificador) {
+            hapticTap();
             const { data, error } = await client.rpc('validar_acceso_match', { identificador: identificador });
             if (error || !data || data.length === 0) {
-                mostrarNotificacion("Tu acceso aún no fue escaneado en puerta.");
-                document.getElementById('btn-login-manual').innerText = "Ingresar a la fiesta";
+                alert("🔒 Tenés que escanear tu QR en la puerta de la fiesta primero.");
+                document.getElementById('btn-login-manual').innerText = "Entrar a la Pista";
                 return;
             }
             usuarioActual = data[0];
@@ -197,189 +255,238 @@
             else irAPantalla('pantalla-onboarding');
         }
 
-        function seleccionarInteres(btn, valor) {
-            document.querySelectorAll('.btn-opcion').forEach(b => b.classList.remove('seleccionado'));
-            btn.classList.add('seleccionado');
-            document.getElementById('select-interes').value = valor;
-        }
-
         async function activarPerfil() {
+            hapticTap();
             const ig = document.getElementById('input-ig').value.trim();
             const interes = document.getElementById('select-interes').value;
-            
-            if(!ig) { mostrarNotificacion("Falta tu @instagram."); return; }
-            if(!interes) { mostrarNotificacion("Elegí a quién querés conocer."); return; }
+            if(!ig || !interes) return alert("Faltan datos para armar tu perfil.");
 
             const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes });
             if(!error) {
                 usuarioActual.instagram = ig;
                 usuarioActual.busca_match = true;
                 iniciarTinder();
-            } else { mostrarNotificacion("Error de conexión."); }
+            } else alert("Error de conexión.");
         }
 
-        /* --- LÓGICA TINDER Y SWIPE --- */
+        /* --- EL MOTOR TINDER --- */
         function iniciarTinder() {
             irAPantalla('pantalla-match');
             cargarCandidatos();
         }
 
         async function cargarCandidatos() {
+            document.getElementById('radar-vacio').classList.add('visible');
             const { data, error } = await client.rpc('obtener_candidatos', { mi_id: usuarioActual.id });
             if(!error) {
                 listaCandidatos = data || [];
                 indiceActual = 0;
-                renderizarCandidato();
+                prepararTarjetas();
             }
         }
 
-        function renderizarCandidato() {
-            const area = document.getElementById('swipe-area');
-            const controles = document.getElementById('botones-accion');
+        function getColor(nombre) {
+            const suma = nombre.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            return gradientes[suma % gradientes.length];
+        }
 
-            if(indiceActual >= listaCandidatos.length) {
-                area.innerHTML = "<div style='text-align:center;'><h3 style='font-size:20px;'>No hay más personas 🪩</h3><p style='color:#888;'>Volvé a revisar más tarde.</p></div>";
+        function prepararTarjetas() {
+            const t1 = document.getElementById('tarjeta-1');
+            const t2 = document.getElementById('tarjeta-2');
+            const controles = document.getElementById('botones-accion');
+            const radar = document.getElementById('radar-vacio');
+
+            // Reset transform
+            t1.style.transition = 'none';
+            t1.style.transform = 'translateX(0) rotate(0deg)';
+            document.getElementById('sello-like').style.opacity = 0;
+            document.getElementById('sello-nope').style.opacity = 0;
+
+            if (indiceActual >= listaCandidatos.length) {
+                t1.style.display = 'none';
+                t2.style.opacity = 0;
                 controles.style.display = 'none';
+                radar.classList.add('visible');
                 return;
             }
 
+            radar.classList.remove('visible');
             controles.style.display = 'flex';
-            const candidato = listaCandidatos[indiceActual];
-            
-            // Creamos la tarjeta interactiva
-            area.innerHTML = `
-                <div class="tarjeta" id="tarjeta-activa">
-                    <div class="sello nope" id="sello-nope">NOPE</div>
-                    <div class="sello like" id="sello-like">LIKE</div>
-                    <h2>${candidato.nombre}</h2>
-                    <p>En la fiesta</p>
-                </div>
-            `;
-            
-            activarGestos(document.getElementById('tarjeta-activa'));
+            t1.style.display = 'flex';
+
+            // Cargar Tarjeta 1 (Frente)
+            const c1 = listaCandidatos[indiceActual];
+            t1.style.background = getColor(c1.nombre);
+            document.getElementById('nombre-1').innerHTML = `${c1.nombre} <span class="dot-online"></span>`;
+            document.getElementById('inicial-1').innerText = c1.nombre.charAt(0).toUpperCase();
+
+            // Cargar Tarjeta 2 (Atrás - Siguiente)
+            if (indiceActual + 1 < listaCandidatos.length) {
+                const c2 = listaCandidatos[indiceActual + 1];
+                t2.style.background = getColor(c2.nombre);
+                document.getElementById('nombre-2').innerText = c2.nombre;
+                document.getElementById('inicial-2').innerText = c2.nombre.charAt(0).toUpperCase();
+                t2.style.opacity = 1;
+                t2.style.transform = 'scale(0.95) translateY(15px)';
+            } else {
+                t2.style.opacity = 0;
+            }
+
+            activarGestos(t1);
         }
 
+        /* --- FÍSICAS DE SWIPE --- */
         function activarGestos(card) {
             let isDragging = false;
             let startX = 0, currentTranslate = 0;
+            const screenWidth = window.innerWidth;
+            const t2 = document.getElementById('tarjeta-2');
 
-            const inicioGesto = (x) => {
-                isDragging = true;
-                startX = x;
-                card.style.transition = 'none';
+            // Limpiar eventos anteriores clonando el nodo
+            const nuevaCard = card.cloneNode(true);
+            card.parentNode.replaceChild(nuevaCard, card);
+            const activeCard = document.getElementById('tarjeta-1');
+
+            const startDrag = (x) => {
+                isDragging = true; startX = x;
+                activeCard.style.transition = 'none';
+                t2.style.transition = 'none';
             };
 
-            const moverGesto = (x) => {
+            const dragMove = (x) => {
                 if(!isDragging) return;
                 currentTranslate = x - startX;
-                const rotacion = currentTranslate * 0.05;
-                card.style.transform = `translateX(${currentTranslate}px) rotate(${rotacion}deg)`;
+                const rotate = currentTranslate * 0.05;
+                activeCard.style.transform = `translateX(${currentTranslate}px) rotate(${rotate}deg)`;
                 
-                // Opacidad de sellos
+                // Efectos de opacidad
+                const opacity = Math.min(Math.abs(currentTranslate) / (screenWidth / 3), 1);
                 if(currentTranslate > 0) {
-                    document.getElementById('sello-like').style.opacity = currentTranslate / 100;
+                    document.getElementById('sello-like').style.opacity = opacity;
                     document.getElementById('sello-nope').style.opacity = 0;
                 } else {
-                    document.getElementById('sello-nope').style.opacity = Math.abs(currentTranslate) / 100;
+                    document.getElementById('sello-nope').style.opacity = opacity;
                     document.getElementById('sello-like').style.opacity = 0;
+                }
+
+                // Animar la tarjeta de atrás
+                const scale = 0.95 + (opacity * 0.05);
+                const translateY = 15 - (opacity * 15);
+                if(t2.style.opacity > 0) t2.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+            };
+
+            const endDrag = () => {
+                if(!isDragging) return;
+                isDragging = false;
+                const releaseThreshold = screenWidth * 0.3;
+                activeCard.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                t2.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+                if (currentTranslate > releaseThreshold) ejecutarDecision('like', screenWidth * 1.5);
+                else if (currentTranslate < -releaseThreshold) ejecutarDecision('pass', -screenWidth * 1.5);
+                else {
+                    activeCard.style.transform = 'translateX(0) rotate(0deg)';
+                    document.getElementById('sello-like').style.opacity = 0;
+                    document.getElementById('sello-nope').style.opacity = 0;
+                    if(t2.style.opacity > 0) t2.style.transform = 'scale(0.95) translateY(15px)';
                 }
             };
 
-            const finGesto = () => {
-                if(!isDragging) return;
-                isDragging = false;
-                card.style.transition = 'transform 0.3s ease';
-
-                if (currentTranslate > 100) ejecutarDecision('like', 1000);
-                else if (currentTranslate < -100) ejecutarDecision('pass', -1000);
-                else { card.style.transform = 'translateX(0) rotate(0deg)'; document.getElementById('sello-like').style.opacity=0; document.getElementById('sello-nope').style.opacity=0; }
-            };
-
-            // Eventos Táctiles (Celular)
-            card.addEventListener('touchstart', e => inicioGesto(e.touches[0].clientX));
-            card.addEventListener('touchmove', e => moverGesto(e.touches[0].clientX));
-            card.addEventListener('touchend', finGesto);
-            // Eventos Mouse (PC)
-            card.addEventListener('mousedown', e => inicioGesto(e.clientX));
-            card.addEventListener('mousemove', e => moverGesto(e.clientX));
-            window.addEventListener('mouseup', finGesto);
+            // Touch
+            activeCard.addEventListener('touchstart', e => startDrag(e.touches[0].clientX));
+            activeCard.addEventListener('touchmove', e => dragMove(e.touches[0].clientX));
+            activeCard.addEventListener('touchend', endDrag);
+            // Mouse
+            activeCard.addEventListener('mousedown', e => startDrag(e.clientX));
+            activeCard.addEventListener('mousemove', e => dragMove(e.clientX));
+            window.addEventListener('mouseup', endDrag);
         }
 
-        // Animación cuando tocan los botones abajo en lugar de deslizar
-        function ejecutarAnimacionBoton(accion) {
-            const card = document.getElementById('tarjeta-activa');
-            if(!card) return;
-            card.style.transition = 'transform 0.4s ease';
-            if(accion === 'like') { card.style.transform = 'translateX(1000px) rotate(30deg)'; document.getElementById('sello-like').style.opacity = 1; }
-            else { card.style.transform = 'translateX(-1000px) rotate(-30deg)'; document.getElementById('sello-nope').style.opacity = 1; }
+        function ejecutarBotonAnimacion(accion) {
+            hapticTap();
+            const activeCard = document.getElementById('tarjeta-1');
+            const screenWidth = window.innerWidth;
+            activeCard.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            
+            if(accion === 'like') {
+                activeCard.style.transform = `translateX(${screenWidth}px) rotate(30deg)`;
+                document.getElementById('sello-like').style.opacity = 1;
+            } else {
+                activeCard.style.transform = `translateX(-${screenWidth}px) rotate(-30deg)`;
+                document.getElementById('sello-nope').style.opacity = 1;
+            }
             setTimeout(() => procesarCruce(accion), 300);
         }
 
-        function ejecutarDecision(accion, translate) {
-            const card = document.getElementById('tarjeta-activa');
-            card.style.transform = `translateX(${translate}px) rotate(${translate * 0.05}deg)`;
+        function ejecutarDecision(accion, translateX) {
+            hapticSwipe();
+            document.getElementById('tarjeta-1').style.transform = `translateX(${translateX}px) rotate(${translateX * 0.05}deg)`;
             setTimeout(() => procesarCruce(accion), 300);
         }
 
         async function procesarCruce(accion) {
             const candidato = listaCandidatos[indiceActual];
-            
             if (accion === 'like') {
-                // Al dar Like, lo guardamos en la base usando la función que ya tenés
                 const { data: esMatch } = await client.rpc('dar_like', { mi_id: usuarioActual.id, objetivo_id: candidato.id });
-                if (esMatch) {
-                    document.getElementById('link-instagram-popup').href = `https://instagram.com/${candidato.instagram.replace('@','')}`;
-                    document.getElementById('modal-match-mutuo').style.display = 'flex';
-                }
+                if (esMatch) dispararPantallaMatch(candidato);
             }
-            // Si es Pass, simplemente pasamos al siguiente sin molestar a la base de datos (según tu requerimiento actual)
-            
             indiceActual++;
-            renderizarCandidato();
+            prepararTarjetas();
+        }
+
+        function dispararPantallaMatch(candidato) {
+            hapticMatch();
+            document.getElementById('match-mi-inicial').innerText = usuarioActual.nombre.charAt(0).toUpperCase();
+            document.getElementById('match-su-inicial').innerText = candidato.nombre.charAt(0).toUpperCase();
+            document.getElementById('txt-match-nombre').innerText = `Le gustaste a ${candidato.nombre}`;
+            document.getElementById('link-instagram-popup').href = `https://instagram.com/${candidato.instagram.replace('@','')}`;
+            document.getElementById('modal-match-mutuo').style.display = 'flex';
         }
 
         function cerrarModalMatch() { document.getElementById('modal-match-mutuo').style.display = 'none'; }
 
-        /* --- PANTALLA MIS MATCHES (FRONTEND SIN SQL) --- */
-        async function abrirMisMatches() {
+        /* --- BANDEJA DE MATCHES --- */
+        async function irAMatches() {
+            hapticTap();
             irAPantalla('pantalla-mis-matches');
             const lista = document.getElementById('lista-matches');
-            lista.innerHTML = "<p style='text-align: center; color: #888;'>Cargando historial...</p>";
+            lista.innerHTML = "<p style='text-align: center; color: #888; margin-top:50px;'>Cargando chats...</p>";
 
-            // 1. Buscamos los likes que yo di
             const { data: likesDados } = await client.from('likes').select('para_ticket_id').eq('de_ticket_id', usuarioActual.id);
-            // 2. Buscamos los likes que recibí
             const { data: likesRecibidos } = await client.from('likes').select('de_ticket_id').eq('para_ticket_id', usuarioActual.id);
 
-            if (!likesDados || !likesRecibidos) { lista.innerHTML = "<p style='text-align: center; color: #888;'>No hay matches aún.</p>"; return; }
+            if (!likesDados || !likesRecibidos) { lista.innerHTML = "<p style='text-align: center; color:#888;'>Sin matches.</p>"; return; }
 
-            // 3. Cruzamos para encontrar los mutuos (Match)
             const idsDados = likesDados.map(l => l.para_ticket_id);
             const idsMutuos = likesRecibidos.filter(l => idsDados.includes(l.de_ticket_id)).map(l => l.de_ticket_id);
 
             if (idsMutuos.length === 0) {
-                lista.innerHTML = "<p style='text-align: center; color: #888; margin-top:50px;'>Todavía no tenés matches.<br>¡Volvé al radar y seguí deslizando!</p>";
+                lista.innerHTML = `
+                    <div style="text-align:center; margin-top:50px;">
+                        <div class="radar" style="margin: 0 auto; background:#333; margin-bottom:20px;"></div>
+                        <h3 style="color:#fff;">Tu bandeja está vacía</h3>
+                        <p style="color:#888;">Seguí deslizando para conocer gente.</p>
+                        <button class="btn-principal" style="width:200px; margin-top:20px; font-size:14px; padding:15px;" onclick="irAPantalla('pantalla-match')">VOLVER AL RADAR</button>
+                    </div>`;
                 return;
             }
 
-            // 4. Traemos los datos de esas personas
-            const { data: matches } = await client.from('entradas').select('nombre, apellido, instagram').in('id', idsMutuos);
+            const { data: matches } = await client.from('entradas').select('nombre, instagram').in('id', idsMutuos);
             
             lista.innerHTML = "";
             matches.forEach(m => {
                 lista.innerHTML += `
                     <div class="match-item">
+                        <div class="match-avatar">${m.nombre.charAt(0).toUpperCase()}</div>
                         <div class="match-info">
                             <h3>${m.nombre}</h3>
                             <p>@${m.instagram.replace('@','')}</p>
                         </div>
-                        <a href="https://instagram.com/${m.instagram.replace('@','')}" target="_blank" class="btn-ig-chico">Hablar</a>
+                        <a href="https://instagram.com/${m.instagram.replace('@','')}" target="_blank" class="btn-ig-chico">💬</a>
                     </div>
                 `;
             });
         }
-
-        function volverAlSwipe() { irAPantalla('pantalla-match'); }
     </script>
 </body>
 </html>
