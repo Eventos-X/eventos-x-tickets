@@ -94,6 +94,19 @@
             <div id="lista-reportados"></div>
         </div>
 
+        <!-- MATCH X: SUMAR EVALUACIONES (PACKS) -->
+        <div style="margin-top:40px;">
+            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">⚡ Match X: sumar evaluaciones</h2>
+            <p style="color:#888; font-size:13px; margin:0 0 15px;">Cuando alguien paga un pack, cargá su DNI y la cantidad. Se suman a su cuenta al instante.</p>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <input type="text" id="dni-pack" placeholder="DNI" maxlength="8" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                       style="padding:10px; background:#161616; border:1px solid #222; color:#fff; border-radius:8px; width:150px;">
+                <input type="number" id="cant-pack" value="10" min="1" max="500"
+                       style="padding:10px; background:#161616; border:1px solid #222; color:#fff; border-radius:8px; width:90px;">
+                <button class="btn-refresh" onclick="sumarSwipes()">Sumar</button>
+            </div>
+        </div>
+
         <!-- TIPOS DE ENTRADA Y PRECIOS -->
         <div style="margin-top:40px;">
             <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">🎟️ Tipos de entrada y precios</h2>
@@ -229,6 +242,17 @@
             btn.innerText = 'Guardar';
             if (error) return alert('❌ ' + error.message);
             cargarTipos();
+        }
+
+        // ---------- Match X: packs ----------
+        async function sumarSwipes() {
+            const dni = document.getElementById('dni-pack').value.trim();
+            const cant = parseInt(document.getElementById('cant-pack').value);
+            if (dni.length !== 8) return alert('⚠️ Ingresá un DNI de 8 números.');
+            const { data, error } = await client.rpc('sumar_swipes', { pin_seguridad: getPin(), p_dni: dni, p_cantidad: cant });
+            if (error) return alert('❌ ' + error.message);
+            alert(`✅ ${data.nombre} ahora tiene ${data.extra} evaluaciones extra.`);
+            document.getElementById('dni-pack').value = '';
         }
 
         // ---------- Cerrar el evento ----------
