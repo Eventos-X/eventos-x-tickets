@@ -94,16 +94,25 @@
             <div id="lista-reportados"></div>
         </div>
 
-        <!-- MATCH X: SUMAR EVALUACIONES (PACKS) -->
+        <!-- MATCH X: SCORING POR PERSONA -->
         <div style="margin-top:40px;">
-            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">⚡ Match X: sumar evaluaciones</h2>
-            <p style="color:#888; font-size:13px; margin:0 0 15px;">Cuando alguien paga un pack, cargá su DNI y la cantidad. Se suman a su cuenta al instante.</p>
-            <div style="display:flex; flex-wrap:wrap; gap:8px;">
-                <input type="text" id="dni-pack" placeholder="DNI" maxlength="8" inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '');"
-                       style="padding:10px; background:#161616; border:1px solid #222; color:#fff; border-radius:8px; width:150px;">
-                <input type="number" id="cant-pack" value="10" min="1" max="500"
-                       style="padding:10px; background:#161616; border:1px solid #222; color:#fff; border-radius:8px; width:90px;">
-                <button class="btn-refresh" onclick="sumarSwipes()">Sumar</button>
+            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">📊 Scoring Match X</h2>
+            <p style="color:#888; font-size:13px; margin:0 0 12px;">Valoración 0–100: 70% aceptación (Barros recibidos sobre veces que lo/la vieron), 20% matches, 10% Súper Barros recibidos, −15 por reporte. El Match de cada persona se reinicia a las 24 hs de entrar; antes se guarda acá en el historial.</p>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+                <button class="btn-refresh" id="btn-rank-vivo" onclick="cargarRanking(false)">🔴 En vivo</button>
+                <button class="btn-refresh" id="btn-rank-hist" onclick="cargarRanking(true)">🗂️ Historial</button>
+                <button class="btn-refresh" onclick="descargarRanking()">⬇️ Descargar (CSV)</button>
+            </div>
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                    <thead><tr style="color:#888; text-align:left;">
+                        <th style="padding:8px;">Persona</th><th style="padding:8px;">Valoración</th>
+                        <th style="padding:8px;" title="Barros / Súper / Pases dados">Dio ♥/⭐/✕</th>
+                        <th style="padding:8px;" title="Barros / Súper / Pases recibidos">Recibió ♥/⭐/✕</th>
+                        <th style="padding:8px;">Matches</th><th style="padding:8px;">Reportes</th>
+                    </tr></thead>
+                    <tbody id="lista-ranking"><tr><td colspan="6" style="padding:10px; color:#666;">Tocá "En vivo" o "Historial".</td></tr></tbody>
+                </table>
             </div>
         </div>
 
@@ -244,15 +253,37 @@
             cargarTipos();
         }
 
-        // ---------- Match X: packs ----------
-        async function sumarSwipes() {
-            const dni = document.getElementById('dni-pack').value.trim();
-            const cant = parseInt(document.getElementById('cant-pack').value);
-            if (dni.length !== 8) return alert('⚠️ Ingresá un DNI de 8 números.');
-            const { data, error } = await client.rpc('sumar_swipes', { pin_seguridad: getPin(), p_dni: dni, p_cantidad: cant });
-            if (error) return alert('❌ ' + error.message);
-            alert(`✅ ${data.nombre} ahora tiene ${data.extra} evaluaciones extra.`);
-            document.getElementById('dni-pack').value = '';
+        // ---------- Scoring Match X ----------
+        let rankingActual = [];
+        const colorCat = { 'Estrella': '#fbbf24', 'Popular': '#ec4899', 'Activo/a': '#10b981', 'Tranqui': '#888' };
+
+        async function cargarRanking(historial) {
+            const tbody = document.getElementById('lista-ranking');
+            tbody.innerHTML = '<tr><td colspan="6" style="padding:10px; color:#666;">Cargando...</td></tr>';
+            const { data, error } = await client.rpc('get_ranking_match', { pin_seguridad: getPin(), p_historial: historial });
+            if (error) { tbody.innerHTML = `<tr><td colspan="6" style="padding:10px; color:#ef4444;">${esc(error.message)}</td></tr>`; return; }
+            rankingActual = data || [];
+            if (!rankingActual.length) { tbody.innerHTML = '<tr><td colspan="6" style="padding:10px; color:#666;">Todavía no hay datos.</td></tr>'; return; }
+            tbody.innerHTML = rankingActual.map(r => `
+                <tr style="border-top:1px solid #222;">
+                    <td style="padding:8px;"><b>${esc(r.nombre)}</b><br><span style="color:#888;">${r.instagram ? '@' + esc(r.instagram) : '—'} · ${esc(r.tipo_entrada || '')}</span></td>
+                    <td style="padding:8px;"><b style="font-size:16px;">${r.valoracion}</b> <span style="color:${colorCat[r.categoria] || '#888'}; font-weight:800;">${esc(r.categoria)}</span></td>
+                    <td style="padding:8px;">${r.barros_dados} / ${r.super_dados} / ${r.pases_dados}</td>
+                    <td style="padding:8px;">${r.barros_recibidos} / ${r.super_recibidos} / ${r.pases_recibidos}</td>
+                    <td style="padding:8px;">${r.matches}</td>
+                    <td style="padding:8px; ${r.reportes_recibidos ? 'color:#ef4444;' : ''}">${r.reportes_recibidos}</td>
+                </tr>`).join('');
+        }
+
+        function descargarRanking() {
+            if (!rankingActual.length) return alert('Primero cargá "En vivo" o "Historial".');
+            const cols = Object.keys(rankingActual[0]);
+            const celda = (x) => `"${String(x ?? '').replace(/"/g, '""')}"`;
+            const csv = '\ufeff' + [cols.join(';'), ...rankingActual.map(r => cols.map(c => celda(r[c])).join(';'))].join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            a.download = `scoring-match-x-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
         }
 
         // ---------- Cerrar el evento ----------
