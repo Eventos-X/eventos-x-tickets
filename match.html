@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Match X - La Fiesta</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -156,21 +157,13 @@
 </head>
 <body>
 
-    <!-- PANTALLA LOGIN -->
+    <!-- PANTALLA DE ACCESO (solo con el link del mail) -->
     <div class="pantalla active" id="pantalla-login">
-        <div class="contenido-centrado">
+        <div class="contenido-centrado" style="text-align:center;">
             <h1 class="titulo-seccion">MATCH <span style="color:var(--tinder-rosa)">X</span></h1>
-            <p class="subtitulo">Ingresá tu DNI para validar tu acceso a la fiesta y entrar al radar.</p>
-            <div class="input-box">
-                <span>🆔</span>
-                <input type="tel" id="input-dni" placeholder="Tu DNI (8 números)" maxlength="8" oninput="this.value = this.value.replace(/[^0-9]/g, '');">
-            </div>
-            <div class="input-box">
-                <span>✉️</span>
-                <input type="email" id="input-email" placeholder="El mail con el que sacaste la entrada" autocomplete="email">
-            </div>
-            <button class="btn-principal" id="btn-login-manual" onclick="loginManual()">Entrar a la Pista</button>
-            <p class="subtitulo" style="margin:20px 0 0; font-size:13px;">Tip: abrí el link del mail que te llegó al entrar y no tenés que escribir nada.</p>
+            <div style="font-size:60px; margin:10px 0 15px;" id="acceso-icono">🔒</div>
+            <h2 style="margin:0 0 10px; font-size:22px;" id="acceso-titulo">Match X se abre con tu link personal</h2>
+            <p class="subtitulo" style="margin-bottom:0;" id="acceso-texto">Cuando escanean tu entrada en la puerta te llega un mail con el botón <b>"Entrar a Match X"</b>. Abrilo desde ese mail.</p>
         </div>
     </div>
 
@@ -225,7 +218,6 @@
         </div>
         <div class="contador-swipes">
             <span class="pill" id="pill-swipes">⚡ —</span>
-            <span class="pill" id="pill-extra" style="display:none;"></span>
             <button class="pill" style="cursor:pointer;" onclick="mostrarTips()">❔ Cómo funciona</button>
         </div>
         
@@ -243,7 +235,6 @@
                 <p style="color:#aaa; font-size:14px; margin:8px 0 0;">Se recargan solas. Mientras tanto, revisá tus matches.</p>
                 <div class="reloj" id="reloj-limite">--:--</div>
                 <p style="color:#666; font-size:12px; margin:0 0 22px;">para volver a evaluar</p>
-                <button class="btn-principal" onclick="abrirPack()">⚡ Sumar <span class="txt-pack-cant">10</span> más</button>
                 <button style="background:transparent; color:#aaa; border:none; margin-top:14px; font-weight:800; cursor:pointer;" onclick="irAMatches()">Ver mis matches 🔥</button>
             </div>
 
@@ -299,19 +290,6 @@
         <button style="background:transparent; color:#888; border:none; margin-top: 25px; padding: 15px; font-size: 14px; font-weight: bold; text-transform: uppercase; z-index: 2;" onclick="cerrarModalMatch()">Seguir deslizando</button>
     </div>
 
-    <!-- MODAL: SUMAR EVALUACIONES -->
-    <div class="modal-x" id="modal-pack" onclick="if(event.target===this) this.classList.remove('visible')">
-        <div class="hoja">
-            <div style="font-size:44px;">⚡</div>
-            <h2 style="margin:8px 0 6px; font-size:22px;">Sumá <span class="txt-pack-cant">10</span> evaluaciones más</h2>
-            <p style="color:#aaa; font-size:14px; margin:0 0 18px;">Se usan cuando se terminan las de la hora y no vencen en toda la noche.</p>
-            <div style="font-size:32px; font-weight:900; margin-bottom:6px;" id="txt-pack-precio">$2.000</div>
-            <p style="color:#ccc; font-size:14px; margin:0 0 22px;" id="txt-pack-instr">Pedí tu pack en la barra mostrando tu DNI.</p>
-            <button class="btn-principal" onclick="document.getElementById('modal-pack').classList.remove('visible'); actualizarEstado();">Listo, ya lo pedí</button>
-            <button style="background:transparent; color:#888; border:none; margin-top:12px; font-weight:800; cursor:pointer;" onclick="document.getElementById('modal-pack').classList.remove('visible')">Ahora no</button>
-        </div>
-    </div>
-
     <!-- MODAL: CÓMO FUNCIONA -->
     <div class="modal-x" id="modal-tips" onclick="if(event.target===this) cerrarTips()">
         <div class="hoja">
@@ -344,12 +322,12 @@
             t.textContent = msg; t.style.display = 'block';
             clearTimeout(t._h); t._h = setTimeout(() => t.style.display = 'none', ms);
         }
-        const fmtPesos = (n) => '$' + Number(n || 0).toLocaleString('es-AR');
-        const evaluacionesDisponibles = () => estadoSwipes ? estadoSwipes.restantes_hora + estadoSwipes.extra : 1;
+        const evaluacionesDisponibles = () => estadoSwipes ? estadoSwipes.restantes_hora : 1;
 
         async function actualizarEstado() {
-            const { data } = await client.rpc('estado_swipes', { mi_id: usuarioActual.id });
+            const { data } = await client.rpc('estado_swipes', { mi_id: usuarioActual.id, p_token: sesion.token });
             if (!data) return;
+            if (data.sesion === false) return sesionCerrada();
             estadoSwipes = data;
             pintarEstado();
         }
@@ -359,16 +337,10 @@
             const pill = document.getElementById('pill-swipes');
             pill.textContent = `⚡ ${e.restantes_hora}/${e.limite} esta hora`;
             pill.classList.toggle('bajo', e.restantes_hora <= 5);
-            const px = document.getElementById('pill-extra');
-            px.style.display = e.extra > 0 ? 'inline-flex' : 'none';
-            px.textContent = `➕ ${e.extra} extra`;
             document.getElementById('badge-super').textContent = e.superlikes_restantes;
             document.getElementById('btn-super').disabled = e.superlikes_restantes <= 0;
             document.getElementById('txt-limite').textContent = e.limite;
             document.getElementById('tip-limite').textContent = e.limite;
-            document.querySelectorAll('.txt-pack-cant').forEach(x => x.textContent = e.pack_cantidad);
-            document.getElementById('txt-pack-precio').textContent = fmtPesos(e.pack_precio);
-            document.getElementById('txt-pack-instr').textContent = e.pack_instrucciones || '';
             const sinNada = evaluacionesDisponibles() <= 0;
             document.getElementById('panel-limite').classList.toggle('visible', sinNada);
             document.getElementById('botones-accion').style.visibility = sinNada ? 'hidden' : '';
@@ -386,7 +358,6 @@
             tick(); relojLimite = setInterval(tick, 1000);
         }
 
-        function abrirPack() { document.getElementById('modal-pack').classList.add('visible'); }
         function mostrarTips() { document.getElementById('modal-tips').classList.add('visible'); }
         function cerrarTips() {
             document.getElementById('modal-tips').classList.remove('visible');
@@ -395,7 +366,7 @@
 
         async function deshacer() {
             hapticTap();
-            const { data: objetivo } = await client.rpc('deshacer_ultimo', { mi_id: usuarioActual.id });
+            const { data: objetivo } = await client.rpc('deshacer_ultimo', { mi_id: usuarioActual.id, p_token: sesion.token });
             document.getElementById('btn-deshacer').disabled = true;
             if (!objetivo || !ultimoPass || ultimoPass.id !== objetivo) { ultimoPass = null; return toast('Solo se puede deshacer el último ✕ de los últimos 2 minutos'); }
             listaCandidatos.splice(indiceActual, 0, ultimoPass);
@@ -420,34 +391,51 @@
         const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const limpiarIG = (ig) => String(ig || '').replace('@', '').trim().toLowerCase();
 
-        window.onload = async () => {
-            // Prioridad: link del mail (?id=...) y si no, la sesión guardada en este celular
-            const ticketId = new URLSearchParams(window.location.search).get('id') || localStorage.getItem('match_x_id');
-            if (ticketId) await validarUsuario(ticketId, null, true);
-        };
+        // ---------- Sesión: solo con el link del mail, un celular a la vez ----------
+        let sesion = null;   // { id, token }
+        const leerSesion = () => { try { return JSON.parse(localStorage.getItem('match_x_sesion') || 'null'); } catch (e) { return null; } };
+        const guardarSesion = (x) => { try { localStorage.setItem('match_x_sesion', JSON.stringify(x)); } catch (e) {} };
 
-        async function loginManual() {
-            const dniVal = document.getElementById('input-dni').value.trim();
-            const emailVal = document.getElementById('input-email').value.trim();
-            if (dniVal.length !== 8) return alert("Ingresá un DNI de 8 números.");
-            if (!emailVal.includes('@')) return alert("Ingresá el mail con el que sacaste la entrada.");
-            document.getElementById('btn-login-manual').innerText = "Verificando...";
-            await validarUsuario(dniVal, emailVal, false);
+        function mostrarAcceso(icono, titulo, texto) {
+            document.getElementById('acceso-icono').textContent = icono;
+            document.getElementById('acceso-titulo').textContent = titulo;
+            document.getElementById('acceso-texto').innerHTML = texto;
+            irAPantalla('pantalla-login');
         }
 
-        async function validarUsuario(identificador, email, silencioso) {
-            hapticTap();
-            const { data, error } = await client.rpc('validar_acceso_match', { identificador: identificador, p_email: email });
-            if (error || !data || data.length === 0) {
-                localStorage.removeItem('match_x_id');
-                if (!silencioso || new URLSearchParams(window.location.search).get('id')) {
-                    alert("🔒 No encontramos tu acceso. Revisá DNI y mail, o escaneá tu QR en la puerta primero.");
-                }
-                document.getElementById('btn-login-manual').innerText = "Entrar a la Pista";
-                return;
+        function sesionCerrada() {
+            try { localStorage.removeItem('match_x_sesion'); } catch (e) {}
+            sesion = null;
+            mostrarAcceso('📱', 'Tu Match X se abrió en otro celular',
+                'Solo puede estar abierto en un celular a la vez. Si sos vos, volvé a tocar el botón del mail y seguís donde estabas: tus fotos, likes y matches quedan guardados.');
+        }
+
+        window.onload = async () => {
+            const idLink = new URLSearchParams(window.location.search).get('id');
+            const guardada = leerSesion();
+            // Sacamos el código de la barra de direcciones (así no se comparte copiando la dirección)
+            if (idLink) history.replaceState(null, '', location.pathname);
+
+            if (guardada && (!idLink || idLink === guardada.id)) {
+                const { data } = await client.rpc('retomar_sesion_match', { p_id: guardada.id, p_token: guardada.token });
+                if (data && data[0]) { sesion = guardada; return entrar(data[0]); }
             }
-            usuarioActual = data[0];
-            localStorage.setItem('match_x_id', usuarioActual.id);
+            if (idLink) {
+                const { data } = await client.rpc('iniciar_sesion_match', { p_id: idLink });
+                if (data && data[0]) {
+                    sesion = { id: data[0].id, token: data[0].token };
+                    guardarSesion(sesion);
+                    return entrar(data[0]);
+                }
+                return mostrarAcceso('⌛', 'Este link ya no está disponible',
+                    'El link de Match X funciona solo durante la fiesta y las horas siguientes. Si recién entraste, esperá el mail que te llega al escanear tu entrada.');
+            }
+            if (guardada) return sesionCerrada();
+        };
+
+        function entrar(u) {
+            hapticTap();
+            usuarioActual = u;
             if (usuarioActual.busca_match && usuarioActual.instagram && usuarioActual.selfie_url) iniciarTinder();
             else abrirPerfil();
         }
@@ -500,12 +488,14 @@
                 const form = new FormData();
                 form.append('ticket_id', usuarioActual.id);
                 form.append('tipo', tipo);
+                form.append('token', sesion.token);
                 form.append('foto', blob, 'foto.jpg');
                 const r = await fetch(`${supabaseUrl}/functions/v1/subir-foto`, {
                     method: 'POST', body: form,
                     headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
                 });
                 const res = await r.json();
+                if (r.status === 403 && /sesi/i.test(res.error || '')) return sesionCerrada();
                 if (!r.ok) throw new Error(res.error || 'No se pudo subir la foto');
                 if (tipo === 'principal') usuarioActual.selfie_url = res.url;
                 usuarioActual.fotos = res.fotos || usuarioActual.fotos;
@@ -519,7 +509,7 @@
         async function quitarFoto(i) {
             const url = (usuarioActual.fotos || [])[i];
             if (!url) return;
-            const { data, error } = await client.rpc('quitar_foto', { p_ticket_id: usuarioActual.id, p_url: url });
+            const { data, error } = await client.rpc('quitar_foto', { p_ticket_id: usuarioActual.id, p_url: url, p_token: sesion.token });
             if (!error) { usuarioActual.fotos = data || []; pintarFotosPerfil(); }
         }
 
@@ -533,10 +523,11 @@
             const btn = document.getElementById('btn-activar');
             btn.innerText = "Activando...";
             const bio = document.getElementById('input-bio').value.trim();
-            const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes, p_bio: bio });
+            const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes, p_bio: bio, p_token: sesion.token });
             usuarioActual.bio = bio;
             btn.innerText = "Activar Radar";
 
+            if (error && error.message.includes('SESION_CERRADA')) return sesionCerrada();
             if (error) {
                 return alert(error.message.includes('Instagram') ? "Ese usuario de Instagram no es válido."
                            : error.message.includes('foto principal') ? "🖼️ Primero subí tu foto principal."
@@ -557,7 +548,7 @@
 
         async function cargarCandidatos() {
             document.getElementById('radar-vacio').classList.add('visible');
-            const { data, error } = await client.rpc('obtener_candidatos', { mi_id: usuarioActual.id });
+            const { data, error } = await client.rpc('obtener_candidatos', { mi_id: usuarioActual.id, p_token: sesion.token });
             if(!error) {
                 listaCandidatos = data || [];
                 indiceActual = 0;
@@ -592,7 +583,7 @@
             if (!c) return;
             const motivo = prompt(`¿Por qué reportás a @${limpiarIG(c.instagram)}?\n(ej: no es la persona de la foto, Instagram falso, ofensivo)`);
             if (motivo === null) return;
-            await client.rpc('reportar_perfil', { mi_id: usuarioActual.id, objetivo_id: c.id, p_motivo: motivo });
+            await client.rpc('reportar_perfil', { mi_id: usuarioActual.id, objetivo_id: c.id, p_motivo: motivo, p_token: sesion.token });
             alert('Gracias, lo vamos a revisar. No te va a aparecer más.');
             indiceActual++;
             prepararTarjetas();
@@ -786,8 +777,9 @@
         async function procesarCruce(accion) {
             const candidato = listaCandidatos[indiceActual];
             if (!candidato) return;
-            const { data: r, error } = await client.rpc('registrar_interaccion', { mi_id: usuarioActual.id, objetivo_id: candidato.id, tipo_accion: accion });
+            const { data: r, error } = await client.rpc('registrar_interaccion', { mi_id: usuarioActual.id, objetivo_id: candidato.id, tipo_accion: accion, p_token: sesion.token });
             if (error || !r) { toast('Sin conexión, probá de nuevo'); prepararTarjetas(); return; }
+            if (!r.ok && r.motivo === 'sesion') return sesionCerrada();
             if (!r.ok && r.motivo !== 'repetido') {
                 if (r.motivo === 'sin_superlikes') toast('⭐ Ya usaste tu Súper Barro de esta hora');
                 await actualizarEstado();
@@ -836,7 +828,7 @@
             const lista = document.getElementById('lista-matches');
             lista.innerHTML = "<p style='text-align: center; color: #888; margin-top:50px;'>Cargando chats...</p>";
 
-            const { data: matches, error } = await client.rpc('obtener_mis_matches', { mi_id: usuarioActual.id });
+            const { data: matches, error } = await client.rpc('obtener_mis_matches', { mi_id: usuarioActual.id, p_token: sesion.token });
 
             if (error) { lista.innerHTML = "<p style='text-align: center; color:#888;'>Error de conexión. Probá de nuevo.</p>"; return; }
 
