@@ -74,8 +74,7 @@
             
             <select id="tipo_entrada" required>
                 <option value="" disabled selected>Seleccioná tu tipo de acceso</option>
-                <option value="Mujeres - $25.000">Mujeres - $25.000</option>
-                <option value="Hombres - $50.000">Hombres - $50.000</option>
+                <!-- Los tipos y precios se cargan desde la base (Admin → Tipos de entrada) -->
             </select>
 
             <div class="tc-container">
@@ -182,6 +181,20 @@
         const client = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         let idVentaActual = "";
+
+        // Tipos de entrada y precios: vienen de la base, se cambian desde el Admin
+        async function cargarTiposEntrada() {
+            const sel = document.getElementById('tipo_entrada');
+            const { data, error } = await client.rpc('get_tipos_entrada');
+            if (error || !data) return;
+            sel.innerHTML = '<option value="" disabled selected>Seleccioná tu tipo de acceso</option>' +
+                data.map(t => `<option value="${t.id}" ${t.agotado ? 'disabled' : ''}>${t.etiqueta.replace(/[<>&"]/g, '')}${t.agotado ? ' (AGOTADO)' : ''}</option>`).join('');
+            if (data.length > 0 && data.every(t => t.agotado)) {
+                document.getElementById('btn-submit').disabled = true;
+                document.getElementById('btn-submit').innerText = 'SOLD OUT';
+            }
+        }
+        cargarTiposEntrada();
         
         // Cronómetro para detección de bots de alta velocidad
         const tiempoAperturaPagina = Date.now();
@@ -262,6 +275,10 @@
                 const { error } = await client.from('entradas').insert([datos]);
                 
                 if (error) {
+                    if (error.message.includes('CUPO_AGOTADO')) {
+                        cargarTiposEntrada();
+                        throw new Error("❌ Se agotó ese tipo de entrada. Elegí otro.");
+                    }
                     if (error.message.includes('AFORO_AGOTADO')) {
                         throw new Error("❌ ¡SOLD OUT! Se acaban de agotar las últimas disponibilidades.");
                     }
