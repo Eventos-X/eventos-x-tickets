@@ -93,6 +93,33 @@
             <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 15px;">⚑ Perfiles reportados en Match X</h2>
             <div id="lista-reportados"></div>
         </div>
+
+        <!-- TIPOS DE ENTRADA Y PRECIOS -->
+        <div style="margin-top:40px;">
+            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">🎟️ Tipos de entrada y precios</h2>
+            <p style="color:#888; font-size:13px; margin:0 0 15px;">Lo que se cambia acá aparece al instante en la página de Entradas. Cupo vacío = sin límite propio (solo el aforo general).</p>
+            <div style="overflow-x:auto;">
+                <table id="tabla-tipos" style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead><tr style="color:#888; text-align:left;">
+                        <th style="padding:8px;">Nombre</th><th style="padding:8px;">Precio $</th><th style="padding:8px;">Cupo</th>
+                        <th style="padding:8px;">Género (Match)</th><th style="padding:8px;">Orden</th><th style="padding:8px;">Activo</th>
+                        <th style="padding:8px;">Vendidas</th><th></th>
+                    </tr></thead>
+                    <tbody id="lista-tipos"></tbody>
+                </table>
+            </div>
+            <button class="btn-refresh" style="margin-top:12px;" onclick="agregarFilaTipo()">＋ Agregar tipo de entrada</button>
+        </div>
+
+        <!-- ZONA DE PELIGRO: EXPORTAR Y LIMPIAR EVENTO -->
+        <div style="margin-top:50px; border:1px solid #ef4444; border-radius:15px; padding:20px; background:rgba(239,68,68,0.05);">
+            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px; color:#ef4444;">⚠️ Cerrar el evento</h2>
+            <p style="color:#aaa; font-size:13px; margin:0 0 15px;">Al terminar la fiesta: primero descargá la planilla y después limpiá. Limpiar borra <b>todas</b> las entradas, likes, reportes, mails en cola y fotos del Match. No se puede deshacer.</p>
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <button class="btn-refresh" onclick="exportarEntradas()">⬇️ Descargar planilla (CSV)</button>
+                <button class="btn-rechazar" style="font-size:14px;" onclick="limpiarEvento()">🗑️ Limpiar evento</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -153,7 +180,85 @@
             location.reload();
         }
 
-        function cargarTodo() { cargarPendientes(); cargarEstadoMails(); cargarReportados(); }
+        function cargarTodo() { cargarPendientes(); cargarEstadoMails(); cargarReportados(); cargarTipos(); }
+
+        // ---------- Tipos de entrada ----------
+        const estiloInput = 'background:#161616; border:1px solid #333; color:#fff; border-radius:8px; padding:8px; width:100%; box-sizing:border-box;';
+
+        function filaTipo(t) {
+            t = t || { id: '', nombre: '', precio: '', cupo: '', genero: '', orden: 0, activo: true, vendidas: 0 };
+            return `<tr data-id="${esc(t.id)}" style="border-top:1px solid #222;">
+                <td style="padding:6px;"><input class="t-nombre" value="${esc(t.nombre)}" placeholder="Ej: Preventa" style="${estiloInput} min-width:120px;"></td>
+                <td style="padding:6px;"><input class="t-precio" type="number" min="0" value="${esc(t.precio)}" style="${estiloInput} min-width:90px;"></td>
+                <td style="padding:6px;"><input class="t-cupo" type="number" min="1" value="${esc(t.cupo ?? '')}" placeholder="—" style="${estiloInput} min-width:70px;"></td>
+                <td style="padding:6px;"><select class="t-genero" style="${estiloInput}">
+                    <option value="" ${!t.genero ? 'selected' : ''}>Sin filtro</option>
+                    <option value="Mujer" ${t.genero === 'Mujer' ? 'selected' : ''}>Mujer</option>
+                    <option value="Hombre" ${t.genero === 'Hombre' ? 'selected' : ''}>Hombre</option></select></td>
+                <td style="padding:6px;"><input class="t-orden" type="number" value="${esc(t.orden)}" style="${estiloInput} width:60px;"></td>
+                <td style="padding:6px; text-align:center;"><input class="t-activo" type="checkbox" ${t.activo ? 'checked' : ''} style="width:18px; height:18px;"></td>
+                <td style="padding:6px; color:#888;">${t.vendidas ?? 0}</td>
+                <td style="padding:6px;"><button class="btn-refresh" onclick="guardarTipo(this)">Guardar</button></td>
+            </tr>`;
+        }
+
+        async function cargarTipos() {
+            const { data, error } = await client.rpc('get_tipos_admin', { pin_seguridad: getPin() });
+            if (error || !data) return;
+            document.getElementById('lista-tipos').innerHTML = data.map(filaTipo).join('');
+        }
+
+        function agregarFilaTipo() { document.getElementById('lista-tipos').insertAdjacentHTML('beforeend', filaTipo()); }
+
+        async function guardarTipo(btn) {
+            const fila = btn.closest('tr');
+            const v = (c) => fila.querySelector(c).value.trim();
+            const params = {
+                pin_seguridad: getPin(),
+                p_id: fila.dataset.id ? parseInt(fila.dataset.id) : null,
+                p_nombre: v('.t-nombre'),
+                p_precio: parseInt(v('.t-precio')),
+                p_cupo: v('.t-cupo') ? parseInt(v('.t-cupo')) : null,
+                p_genero: v('.t-genero') || null,
+                p_activo: fila.querySelector('.t-activo').checked,
+                p_orden: parseInt(v('.t-orden')) || 0,
+            };
+            if (!params.p_nombre || isNaN(params.p_precio)) return alert('Completá nombre y precio.');
+            btn.innerText = '...';
+            const { error } = await client.rpc('guardar_tipo_entrada', params);
+            btn.innerText = 'Guardar';
+            if (error) return alert('❌ ' + error.message);
+            cargarTipos();
+        }
+
+        // ---------- Cerrar el evento ----------
+        async function exportarEntradas() {
+            const { data, error } = await client.rpc('exportar_entradas', { pin_seguridad: getPin() });
+            if (error) return alert('❌ ' + error.message);
+            if (!data.length) return alert('No hay entradas para exportar.');
+            const cols = Object.keys(data[0]);
+            const celda = (x) => `"${String(x ?? '').replace(/"/g, '""')}"`;
+            const csv = '\ufeff' + [cols.join(';'), ...data.map(r => cols.map(c => celda(r[c])).join(';'))].join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            a.download = `entradas-eventos-x-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+        }
+
+        async function limpiarEvento() {
+            const conf = prompt('⚠️ Esto borra TODAS las entradas, likes, reportes y fotos del Match. No se puede deshacer.\n\n¿Ya descargaste la planilla? Para confirmar, escribí: BORRAR');
+            if (conf === null) return;
+            if (conf.trim() !== 'BORRAR') return alert('No se borró nada (no escribiste BORRAR).');
+            const r = await fetch(`${supabaseUrl}/functions/v1/limpiar-evento`, {
+                method: 'POST',
+                headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pin: getPin(), confirmacion: 'BORRAR' }),
+            });
+            const res = await r.json();
+            if (!r.ok) return alert('❌ ' + (res.error || 'No se pudo limpiar'));
+            alert(`✅ Evento limpio: se borraron ${res.entradas} entradas y ${res.fotos} fotos.`);
+            cargarTodo();
+        }
 
         async function cargarReportados() {
             const { data, error } = await client.rpc('get_reportados', { pin_seguridad: getPin() });
