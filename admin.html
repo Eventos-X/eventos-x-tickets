@@ -88,6 +88,11 @@
         </div>
 
         <div id="lista-pendientes"></div>
+
+        <div id="bloque-reportados" style="display:none; margin-top:40px;">
+            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 15px;">⚑ Perfiles reportados en Match X</h2>
+            <div id="lista-reportados"></div>
+        </div>
     </div>
 
     <script>
@@ -148,7 +153,36 @@
             location.reload();
         }
 
-        function cargarTodo() { cargarPendientes(); cargarEstadoMails(); }
+        function cargarTodo() { cargarPendientes(); cargarEstadoMails(); cargarReportados(); }
+
+        async function cargarReportados() {
+            const { data, error } = await client.rpc('get_reportados', { pin_seguridad: getPin() });
+            const bloque = document.getElementById('bloque-reportados');
+            if (error || !data || data.length === 0) { bloque.style.display = 'none'; return; }
+            bloque.style.display = 'block';
+            document.getElementById('lista-reportados').innerHTML = data.map(r => `
+                <div class="ticket-card" style="${r.oculto ? 'border-color:#ef4444;' : ''}">
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <img src="${esc(r.selfie_url || '')}" alt="" style="width:64px; height:64px; border-radius:50%; object-fit:cover; background:#222;">
+                        <div class="ticket-info">
+                            <h3>${esc(r.nombre)} ${esc(r.apellido)} · @${esc(r.instagram)}</h3>
+                            <p>${r.num_reportes} reporte(s) · ${r.oculto ? '<b style="color:#ef4444;">OCULTO</b>' : 'visible'}</p>
+                            <p style="color:#666; font-size:13px;">${esc(r.motivos)}</p>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        ${r.oculto
+                            ? `<button class="btn-aprobar" data-id="${esc(r.id)}" onclick="moderar(this.dataset.id, false)">Restaurar</button>`
+                            : `<button class="btn-rechazar" data-id="${esc(r.id)}" onclick="moderar(this.dataset.id, true)">Ocultar</button>`}
+                    </div>
+                </div>`).join('');
+        }
+
+        async function moderar(id, ocultar) {
+            const { error } = await client.rpc('moderar_perfil', { p_ticket_id: id, p_ocultar: ocultar, pin_seguridad: getPin() });
+            if (error) alert('Error: ' + error.message);
+            cargarReportados();
+        }
 
         async function cargarEstadoMails() {
             const { data, error } = await client.rpc('get_estado_mails', { pin_seguridad: getPin() });
