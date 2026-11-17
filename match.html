@@ -105,6 +105,19 @@
         .confetti { position: absolute; width: 10px; height: 10px; background-color: #f00; z-index: 1; animation: fall 3s linear forwards; opacity: 0; }
         @keyframes fall { 0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
         @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
+
+        /* Fotos del perfil */
+        .selfie-box { width: 150px; height: 150px; border-radius: 50%; margin: 0 auto 10px; background: #1a1a1a center/cover no-repeat; border: 3px dashed var(--tinder-rosa); display: flex; align-items: center; justify-content: center; font-size: 46px; cursor: pointer; }
+        .selfie-box.lista { border-style: solid; font-size: 0; }
+        .ayuda-foto { text-align: center; color: #888; font-size: 13px; margin: 0 0 22px; }
+        .galeria { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 22px; }
+        .galeria-slot { aspect-ratio: 3/4; border-radius: 14px; background: #1a1a1a center/cover no-repeat; border: 2px dashed #333; display: flex; align-items: center; justify-content: center; color: #555; font-size: 28px; cursor: pointer; position: relative; }
+        .galeria-slot.lista { border-style: solid; border-color: #333; }
+        .galeria-slot .quitar { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--tinder-rojo); color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; }
+        .barras-fotos { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; gap: 5px; z-index: 5; }
+        .barras-fotos span { flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.35); }
+        .barras-fotos span.on { background: #fff; }
+        .btn-reportar { position: absolute; top: 24px; right: 14px; z-index: 6; width: 36px; height: 36px; border-radius: 50%; border: none; background: rgba(0,0,0,0.5); color: #fff; font-size: 16px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -127,12 +140,25 @@
         </div>
     </div>
 
-    <!-- PANTALLA ONBOARDING (Cero Fricción) -->
+    <!-- PANTALLA ONBOARDING: selfie + fotos + Instagram -->
     <div class="pantalla" id="pantalla-onboarding">
-        <div class="contenido-centrado">
-            <h1 class="titulo-seccion">Tu Perfil</h1>
-            <p class="subtitulo">Completá estos datos. El sistema buscará tu foto de Instagram automáticamente.</p>
-            
+        <div class="contenido-centrado" style="justify-content:flex-start;">
+            <h1 class="titulo-seccion" style="margin-top:10px;">Tu Perfil</h1>
+            <p class="subtitulo" style="margin-bottom:22px;">Elegí tu foto principal: es la que van a ver primero los demás.</p>
+
+            <div class="selfie-box" id="selfie-box" onclick="document.getElementById('input-principal').click()">🖼️</div>
+            <p class="ayuda-foto" id="txt-selfie">Foto principal (obligatoria)</p>
+            <div style="display:flex; gap:10px; margin:-8px 0 22px;">
+                <button type="button" class="btn-principal" style="margin:0; padding:13px; font-size:12px; box-shadow:none;" onclick="document.getElementById('input-principal').click()">🖼️ Elegir de la galería</button>
+                <button type="button" class="btn-principal" style="margin:0; padding:13px; font-size:12px; box-shadow:none; background:#1a1a1a; border:2px solid #333;" onclick="document.getElementById('input-selfie').click()">📸 Sacarme una selfie</button>
+            </div>
+            <input type="file" id="input-principal" accept="image/*" hidden onchange="subirFoto(this.files[0], 'principal'); this.value='';">
+            <input type="file" id="input-selfie" accept="image/*" capture="user" hidden onchange="subirFoto(this.files[0], 'principal'); this.value='';">
+
+            <p style="color:#ccc; font-size:14px; font-weight:700; margin:0 0 10px;">Sumá hasta 2 fotos más <span style="color:#666; font-weight:400;">(opcional)</span></p>
+            <div class="galeria" id="galeria"></div>
+            <input type="file" id="input-galeria" accept="image/*" hidden onchange="subirFoto(this.files[0], 'galeria'); this.value='';">
+
             <div class="input-box">
                 <span>@</span>
                 <input type="text" id="input-ig" placeholder="tu.usuario.ig" oninput="this.value = this.value.replace(/[^a-zA-Z0-9._]/g, '');">
@@ -177,6 +203,8 @@
 
             <div class="tarjeta-wrapper" id="tarjeta-1" style="display:none;">
                 <img src="" class="foto-perfil" id="foto-1" alt="Perfil">
+                <div class="barras-fotos" id="barras-1"></div>
+                <button class="btn-reportar" title="Reportar perfil" onmousedown="event.stopPropagation()" ontouchstart="event.stopPropagation()" onclick="event.stopPropagation(); reportarActual()">⚑</button>
                 <div class="sello nope" id="sello-next">NEXT</div>
                 <div class="sello barro" id="sello-barro">BARRO</div>
                 <div class="sello super" id="sello-super">SÚPER BARRO</div>
@@ -267,30 +295,100 @@
             }
             usuarioActual = data[0];
             localStorage.setItem('match_x_id', usuarioActual.id);
-            if (usuarioActual.busca_match && usuarioActual.instagram) iniciarTinder();
-            else irAPantalla('pantalla-onboarding');
+            if (usuarioActual.busca_match && usuarioActual.instagram && usuarioActual.selfie_url) iniciarTinder();
+            else abrirPerfil();
+        }
+
+        function abrirPerfil() {
+            if (usuarioActual.instagram) document.getElementById('input-ig').value = usuarioActual.instagram;
+            if (usuarioActual.interes_match) document.getElementById('select-interes').value = usuarioActual.interes_match;
+            pintarFotosPerfil();
+            irAPantalla('pantalla-onboarding');
+        }
+
+        function pintarFotosPerfil() {
+            const box = document.getElementById('selfie-box');
+            if (usuarioActual.selfie_url) {
+                box.style.backgroundImage = `url("${usuarioActual.selfie_url}")`;
+                box.classList.add('lista');
+                document.getElementById('txt-selfie').textContent = 'Foto principal lista ✅ (tocá para cambiarla)';
+            }
+            const fotos = usuarioActual.fotos || [];
+            document.getElementById('galeria').innerHTML = [0, 1].map(i => fotos[i]
+                ? `<div class="galeria-slot lista" style="background-image:url('${esc(fotos[i])}')"><button class="quitar" onclick="quitarFoto(${i})">✕</button></div>`
+                : `<div class="galeria-slot" onclick="document.getElementById('input-galeria').click()">＋</div>`).join('');
+        }
+
+        // Achica la foto en el celular antes de subirla (más rápido y liviano)
+        function achicarFoto(archivo, maxLado = 1080) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                    const k = Math.min(1, maxLado / Math.max(img.width, img.height));
+                    const c = document.createElement('canvas');
+                    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+                    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+                    c.toBlob(b => b ? resolve(b) : reject(new Error('No se pudo procesar la foto')), 'image/jpeg', 0.82);
+                    URL.revokeObjectURL(img.src);
+                };
+                img.onerror = () => reject(new Error('Formato de foto no soportado'));
+                img.src = URL.createObjectURL(archivo);
+            });
+        }
+
+        async function subirFoto(archivo, tipo) {
+            if (!archivo) return;
+            hapticTap();
+            const aviso = tipo === 'principal' ? document.getElementById('txt-selfie') : null;
+            if (aviso) aviso.textContent = 'Subiendo...';
+            try {
+                const blob = await achicarFoto(archivo);
+                const form = new FormData();
+                form.append('ticket_id', usuarioActual.id);
+                form.append('tipo', tipo);
+                form.append('foto', blob, 'foto.jpg');
+                const r = await fetch(`${supabaseUrl}/functions/v1/subir-foto`, {
+                    method: 'POST', body: form,
+                    headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+                });
+                const res = await r.json();
+                if (!r.ok) throw new Error(res.error || 'No se pudo subir la foto');
+                if (tipo === 'principal') usuarioActual.selfie_url = res.url;
+                usuarioActual.fotos = res.fotos || usuarioActual.fotos;
+                pintarFotosPerfil();
+            } catch (e) {
+                alert('⚠️ ' + e.message);
+                if (aviso) aviso.textContent = usuarioActual.selfie_url ? 'Foto principal lista ✅ (tocá para cambiarla)' : 'Foto principal (obligatoria)';
+            }
+        }
+
+        async function quitarFoto(i) {
+            const url = (usuarioActual.fotos || [])[i];
+            if (!url) return;
+            const { data, error } = await client.rpc('quitar_foto', { p_ticket_id: usuarioActual.id, p_url: url });
+            if (!error) { usuarioActual.fotos = data || []; pintarFotosPerfil(); }
         }
 
         async function activarPerfil() {
             hapticTap();
-            const ig = document.getElementById('input-ig').value.trim();
+            const ig = limpiarIG(document.getElementById('input-ig').value);
             const interes = document.getElementById('select-interes').value;
-            
-            if(!ig || !interes) return alert("Faltan datos para armar tu perfil.");
-            
-            document.getElementById('btn-activar').innerText = "Activando...";
+            if (!usuarioActual.selfie_url) return alert("🖼️ Primero subí tu foto principal.");
+            if (!ig || !interes) return alert("Faltan datos para armar tu perfil.");
 
-            // Guardamos el perfil. Pasamos "" como foto para que la Base de Datos no tire error por el script anterior.
-            const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes, p_foto: "" });
-            
-            if(!error) {
-                usuarioActual.instagram = ig;
-                usuarioActual.busca_match = true;
-                iniciarTinder();
-            } else { 
-                alert(error.message.includes('Instagram') ? "Ese usuario de Instagram no es válido." : "Error de conexión al subir el perfil.");
-                document.getElementById('btn-activar').innerText = "Activar Radar";
+            const btn = document.getElementById('btn-activar');
+            btn.innerText = "Activando...";
+            const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes });
+            btn.innerText = "Activar Radar";
+
+            if (error) {
+                return alert(error.message.includes('Instagram') ? "Ese usuario de Instagram no es válido."
+                           : error.message.includes('foto principal') ? "🖼️ Primero subí tu foto principal."
+                           : "Error de conexión al subir el perfil.");
             }
+            usuarioActual.instagram = ig;
+            usuarioActual.busca_match = true;
+            iniciarTinder();
         }
 
         function iniciarTinder() {
@@ -308,18 +406,37 @@
             }
         }
 
-        /* MAGIA: CARGADOR DE IMÁGENES ANTI-BLOQUEO */
-        function cargarImagenSegura(imgElement, username, nombre) {
-            const igClean = encodeURIComponent(limpiarIG(username));
-            
-            // Si Meta bloquea la foto, saltamos instantáneamente al Avatar Premium.
-            imgElement.onerror = function() {
-                this.onerror = null; // Evita bucle
-                this.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nombre || igClean)}&backgroundColor=111111&textColor=ec4899&fontSize=40&fontWeight=bold`;
+        /* FOTOS DE LA TARJETA: selfie + fotos extra; si algo falla, iniciales */
+        let fotosTarjeta = [], idxFoto = 0;
+
+        function fotosDe(c) { return [c.selfie_url, ...(c.fotos || [])].filter(Boolean); }
+
+        function cargarImagenSegura(imgElement, url, nombre) {
+            imgElement.onerror = function () {
+                this.onerror = null;
+                this.src = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(nombre || 'X')}&backgroundColor=111111&textColor=ec4899&fontSize=40&fontWeight=bold`;
             };
-            
-            // Le forzamos el fallback=false a la API. Así nos aseguramos de que si falla, salte al onerror.
-            imgElement.src = `https://unavatar.io/instagram/${igClean}?fallback=false`;
+            imgElement.src = url || '';
+            if (!url) imgElement.onerror();
+        }
+
+        function mostrarFoto(i) {
+            if (!fotosTarjeta.length) return;
+            idxFoto = (i + fotosTarjeta.length) % fotosTarjeta.length;
+            cargarImagenSegura(document.getElementById('foto-1'), fotosTarjeta[idxFoto], listaCandidatos[indiceActual]?.nombre);
+            document.getElementById('barras-1').innerHTML = fotosTarjeta.length > 1
+                ? fotosTarjeta.map((_, k) => `<span class="${k === idxFoto ? 'on' : ''}"></span>`).join('') : '';
+        }
+
+        async function reportarActual() {
+            const c = listaCandidatos[indiceActual];
+            if (!c) return;
+            const motivo = prompt(`¿Por qué reportás a @${limpiarIG(c.instagram)}?\n(ej: no es la persona de la foto, Instagram falso, ofensivo)`);
+            if (motivo === null) return;
+            await client.rpc('reportar_perfil', { mi_id: usuarioActual.id, objetivo_id: c.id, p_motivo: motivo });
+            alert('Gracias, lo vamos a revisar. No te va a aparecer más.');
+            indiceActual++;
+            prepararTarjetas();
         }
 
         function prepararTarjetas() {
@@ -349,7 +466,8 @@
             document.getElementById('btn-inbox-fuego').classList.add('activo');
 
             const c1 = listaCandidatos[indiceActual];
-            cargarImagenSegura(document.getElementById('foto-1'), c1.instagram, c1.nombre);
+            fotosTarjeta = fotosDe(c1);
+            mostrarFoto(0);
             document.getElementById('nombre-1').textContent = `@${limpiarIG(c1.instagram)}`;
             // Todos los perfiles que aparecen ya entraron a la fiesta (no hay estado "online" inventado)
             document.getElementById('status-dot-1').className = 'dot-online';
@@ -357,7 +475,7 @@
 
             if (indiceActual + 1 < listaCandidatos.length) {
                 const c2 = listaCandidatos[indiceActual + 1];
-                cargarImagenSegura(document.getElementById('foto-2'), c2.instagram, c2.nombre);
+                cargarImagenSegura(document.getElementById('foto-2'), fotosDe(c2)[0], c2.nombre);
                 document.getElementById('nombre-2').textContent = `@${limpiarIG(c2.instagram)}`;
                 document.getElementById('status-txt-2').textContent = c2.me_dio_super ? '⭐ Te dio SÚPER BARRO' : 'En la fiesta';
                 t2.style.opacity = 1;
@@ -385,6 +503,7 @@
                 const currentTime = new Date().getTime();
                 const tapLength = currentTime - lastTap;
                 if (tapLength < 300 && tapLength > 0) {
+                    clearTimeout(timerToque);
                     ejecutarBotonAnimacion('like');
                     if (isTouch) e.preventDefault();
                     return;
@@ -392,6 +511,7 @@
                 lastTap = currentTime;
 
                 isDragging = true; startX = x; startY = y;
+                currentTranslateX = 0; currentTranslateY = 0;
                 activeCard.style.transition = 'none';
                 t2.style.transition = 'none';
             };
@@ -426,9 +546,17 @@
                 if(t2.style.opacity > 0) t2.style.transform = `scale(${scale}) translateY(${translateY}px)`;
             };
 
+            let timerToque = null;
             const endDrag = () => {
                 if(!isDragging) return;
                 isDragging = false;
+                // Toque corto (sin arrastrar): lado derecho = foto siguiente, izquierdo = anterior
+                if (Math.abs(currentTranslateX) < 6 && Math.abs(currentTranslateY) < 6) {
+                    const rect = activeCard.getBoundingClientRect();
+                    const derecha = startX > rect.left + rect.width / 2;
+                    clearTimeout(timerToque);
+                    timerToque = setTimeout(() => { if (Date.now() - lastTap >= 280) mostrarFoto(idxFoto + (derecha ? 1 : -1)); }, 300);
+                }
                 const releaseThresholdX = screenWidth * 0.3;
                 const releaseThresholdY = -150; 
                 
@@ -544,7 +672,7 @@
             lista.innerHTML = matches.map(m => {
                 const ig = limpiarIG(m.instagram);
                 const igUrl = encodeURIComponent(ig);
-                const fotoUrl = `https://unavatar.io/instagram/${igUrl}?fallback=false`;
+                const fotoUrl = m.selfie_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.nombre || ig)}&backgroundColor=111111&textColor=ec4899`;
                 const avatarPremium = `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(m.nombre || ig)}&backgroundColor=111111&textColor=ec4899`;
                 return `
                     <div class="${m.es_super ? 'match-item super-match' : 'match-item'}">
