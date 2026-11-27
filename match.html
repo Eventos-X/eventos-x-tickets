@@ -108,13 +108,23 @@
         @keyframes fadeIn { from { opacity: 0; transform: scale(1.1); } to { opacity: 1; transform: scale(1); } }
 
         /* Fotos del perfil */
-        .selfie-box { width: 150px; height: 150px; border-radius: 50%; margin: 0 auto 10px; background: #1a1a1a center/cover no-repeat; border: 3px dashed var(--tinder-rosa); display: flex; align-items: center; justify-content: center; font-size: 46px; cursor: pointer; }
-        .selfie-box.lista { border-style: solid; font-size: 0; }
-        .ayuda-foto { text-align: center; color: #888; font-size: 13px; margin: 0 0 22px; }
-        .galeria { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 22px; }
-        .galeria-slot { aspect-ratio: 3/4; border-radius: 14px; background: #1a1a1a center/cover no-repeat; border: 2px dashed #333; display: flex; align-items: center; justify-content: center; color: #555; font-size: 28px; cursor: pointer; position: relative; }
-        .galeria-slot.lista { border-style: solid; border-color: #333; }
-        .galeria-slot .quitar { position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 50%; border: none; background: var(--tinder-rojo); color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; }
+        .perfil-form { width: 100%; text-align: left; }
+        .campo-label { display: block; color: #e5e5e5; font-size: 13px; font-weight: 700; letter-spacing: .3px; margin: 0 0 8px; }
+        .campo-label .req { color: var(--tinder-rosa); }
+        .campo-label .opc { color: #666; font-weight: 400; }
+        .campo-ayuda { color: #777; font-size: 12px; margin: -2px 0 18px; line-height: 1.4; }
+        .galeria { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; }
+        .galeria-slot { aspect-ratio: 3/4; border-radius: 12px; background: #151515 center/cover no-repeat; border: 1.5px dashed #333; display: flex; align-items: center; justify-content: center; color: #555; font-size: 26px; font-weight: 300; cursor: pointer; position: relative; }
+        .galeria-slot.principal { border-color: var(--tinder-rosa); }
+        .galeria-slot.lista { border-style: solid; border-color: #2a2a2a; }
+        .galeria-slot .etiqueta { position: absolute; left: 6px; bottom: 6px; background: rgba(0,0,0,.7); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 3px 7px; border-radius: 6px; }
+        .galeria-slot .quitar { position: absolute; top: -7px; right: -7px; width: 24px; height: 24px; border-radius: 50%; border: none; background: #222; color: #fff; font-size: 12px; font-weight: 900; cursor: pointer; }
+        .galeria-slot .subiendo { font-size: 11px; color: #aaa; }
+        .error-form { display: none; background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.45); color: #fca5a5; font-size: 13px; line-height: 1.45; border-radius: 12px; padding: 12px 14px; margin: 4px 0 6px; }
+        .error-form.visible { display: block; }
+        .input-box.invalido input, .input-box.invalido select { border-color: rgba(239,68,68,.75); }
+        .perfil-form .input-box input, .perfil-form .input-box select { padding: 16px 18px 16px 48px; border-radius: 14px; font-size: 15px; }
+        .perfil-form .input-box span { top: 15px; }
         .barras-fotos { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; gap: 5px; z-index: 5; }
         .barras-fotos span { flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,0.35); }
         .barras-fotos span.on { background: #fff; }
@@ -167,45 +177,45 @@
         </div>
     </div>
 
-    <!-- PANTALLA ONBOARDING: selfie + fotos + Instagram -->
+    <!-- PANTALLA ONBOARDING: fotos + Instagram + interés + frase -->
     <div class="pantalla" id="pantalla-onboarding">
         <div class="contenido-centrado" style="justify-content:flex-start;">
-            <h1 class="titulo-seccion" style="margin-top:10px;">Tu Perfil</h1>
-            <p class="subtitulo" style="margin-bottom:22px;">Elegí tu foto principal: es la que van a ver primero los demás.</p>
+            <h1 class="titulo-seccion" style="margin-top:10px;">Tu perfil</h1>
+            <p class="subtitulo" style="margin-bottom:24px;">Completá tus datos para empezar a usar Match X.</p>
 
-            <div class="selfie-box" id="selfie-box" onclick="document.getElementById('input-principal').click()">🖼️</div>
-            <p class="ayuda-foto" id="txt-selfie">Foto principal (obligatoria)</p>
-            <div style="display:flex; gap:10px; margin:-8px 0 22px;">
-                <button type="button" class="btn-principal" style="margin:0; padding:13px; font-size:12px; box-shadow:none;" onclick="document.getElementById('input-principal').click()">🖼️ Elegir de la galería</button>
-                <button type="button" class="btn-principal" style="margin:0; padding:13px; font-size:12px; box-shadow:none; background:#1a1a1a; border:2px solid #333;" onclick="document.getElementById('input-selfie').click()">📸 Sacarme una selfie</button>
+            <div class="perfil-form">
+                <label class="campo-label">Fotos <span class="req">*</span></label>
+                <div class="galeria" id="galeria"></div>
+                <p class="campo-ayuda">La primera es tu foto principal y es obligatoria. Podés sumar hasta dos más.</p>
+                <input type="file" id="input-principal" accept="image/*" hidden onchange="subirFoto(this.files[0], 'principal'); this.value='';">
+                <input type="file" id="input-galeria" accept="image/*" hidden onchange="subirFoto(this.files[0], 'galeria'); this.value='';">
+
+                <label class="campo-label" for="input-ig">Usuario de Instagram <span class="req">*</span></label>
+                <div class="input-box" id="box-ig">
+                    <span>@</span>
+                    <input type="text" id="input-ig" placeholder="usuario" autocapitalize="none" autocorrect="off" oninput="this.value = this.value.replace(/[^a-zA-Z0-9._]/g, ''); limpiarError();">
+                </div>
+
+                <label class="campo-label" for="select-interes">¿A quién querés conocer? <span class="req">*</span></label>
+                <div class="input-box" id="box-interes">
+                    <span>🔥</span>
+                    <select id="select-interes" onchange="limpiarError()">
+                        <option value="" disabled selected>Seleccioná una opción</option>
+                        <option value="Mujeres">Mujeres</option>
+                        <option value="Hombres">Hombres</option>
+                        <option value="Ambos">Ambos</option>
+                    </select>
+                </div>
+
+                <label class="campo-label" for="input-bio">Frase de presentación <span class="opc">(opcional)</span></label>
+                <div class="input-box">
+                    <span>💬</span>
+                    <input type="text" id="input-bio" maxlength="80" placeholder="Algo breve sobre vos">
+                </div>
+
+                <div class="error-form" id="error-perfil"></div>
+                <button class="btn-principal" id="btn-activar" onclick="activarPerfil()">Activar perfil</button>
             </div>
-            <input type="file" id="input-principal" accept="image/*" hidden onchange="subirFoto(this.files[0], 'principal'); this.value='';">
-            <input type="file" id="input-selfie" accept="image/*" capture="user" hidden onchange="subirFoto(this.files[0], 'principal'); this.value='';">
-
-            <p style="color:#ccc; font-size:14px; font-weight:700; margin:0 0 10px;">Sumá hasta 2 fotos más <span style="color:#666; font-weight:400;">(opcional)</span></p>
-            <div class="galeria" id="galeria"></div>
-            <input type="file" id="input-galeria" accept="image/*" hidden onchange="subirFoto(this.files[0], 'galeria'); this.value='';">
-
-            <div class="input-box">
-                <span>@</span>
-                <input type="text" id="input-ig" placeholder="tu.usuario.ig" oninput="this.value = this.value.replace(/[^a-zA-Z0-9._]/g, '');">
-            </div>
-            <div class="input-box">
-                <span>🎯</span>
-                <select id="select-interes">
-                    <option value="" disabled selected>¿A quién querés conocer?</option>
-                    <option value="Mujeres">Mujeres</option>
-                    <option value="Hombres">Hombres</option>
-                    <option value="Ambos">Ambos</option>
-                </select>
-            </div>
-
-            <div class="input-box">
-                <span>💬</span>
-                <input type="text" id="input-bio" maxlength="80" placeholder="Una frase sobre vos (opcional)">
-            </div>
-
-            <button class="btn-principal" id="btn-activar" onclick="activarPerfil()">Activar Radar</button>
         </div>
     </div>
 
@@ -448,17 +458,28 @@
             irAPantalla('pantalla-onboarding');
         }
 
+        let subiendoTipo = null;
         function pintarFotosPerfil() {
-            const box = document.getElementById('selfie-box');
-            if (usuarioActual.selfie_url) {
-                box.style.backgroundImage = `url("${usuarioActual.selfie_url}")`;
-                box.classList.add('lista');
-                document.getElementById('txt-selfie').textContent = 'Foto principal lista ✅ (tocá para cambiarla)';
-            }
             const fotos = usuarioActual.fotos || [];
-            document.getElementById('galeria').innerHTML = [0, 1].map(i => fotos[i]
+            const principal = usuarioActual.selfie_url
+                ? `<div class="galeria-slot principal lista" style="background-image:url('${esc(usuarioActual.selfie_url)}')" onclick="document.getElementById('input-principal').click()"><span class="etiqueta">Principal</span></div>`
+                : `<div class="galeria-slot principal" onclick="document.getElementById('input-principal').click()">${subiendoTipo === 'principal' ? '<span class="subiendo">Subiendo…</span>' : '＋'}<span class="etiqueta">Principal</span></div>`;
+            const extras = [0, 1].map(i => fotos[i]
                 ? `<div class="galeria-slot lista" style="background-image:url('${esc(fotos[i])}')"><button class="quitar" onclick="quitarFoto(${i})">✕</button></div>`
-                : `<div class="galeria-slot" onclick="document.getElementById('input-galeria').click()">＋</div>`).join('');
+                : `<div class="galeria-slot" onclick="document.getElementById('input-galeria').click()">${subiendoTipo === 'galeria' && i === fotos.length ? '<span class="subiendo">Subiendo…</span>' : '＋'}</div>`).join('');
+            document.getElementById('galeria').innerHTML = principal + extras;
+        }
+
+        function mostrarError(msg, campo) {
+            const e = document.getElementById('error-perfil');
+            e.textContent = msg; e.classList.add('visible');
+            document.querySelectorAll('.input-box.invalido').forEach(x => x.classList.remove('invalido'));
+            if (campo) document.getElementById(campo).classList.add('invalido');
+            e.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        function limpiarError() {
+            document.getElementById('error-perfil').classList.remove('visible');
+            document.querySelectorAll('.input-box.invalido').forEach(x => x.classList.remove('invalido'));
         }
 
         // Achica la foto en el celular antes de subirla (más rápido y liviano)
@@ -481,8 +502,8 @@
         async function subirFoto(archivo, tipo) {
             if (!archivo) return;
             hapticTap();
-            const aviso = tipo === 'principal' ? document.getElementById('txt-selfie') : null;
-            if (aviso) aviso.textContent = 'Subiendo...';
+            limpiarError();
+            subiendoTipo = tipo; pintarFotosPerfil();
             try {
                 const blob = await achicarFoto(archivo);
                 const form = new FormData();
@@ -499,10 +520,10 @@
                 if (!r.ok) throw new Error(res.error || 'No se pudo subir la foto');
                 if (tipo === 'principal') usuarioActual.selfie_url = res.url;
                 usuarioActual.fotos = res.fotos || usuarioActual.fotos;
-                pintarFotosPerfil();
             } catch (e) {
-                alert('⚠️ ' + e.message);
-                if (aviso) aviso.textContent = usuarioActual.selfie_url ? 'Foto principal lista ✅ (tocá para cambiarla)' : 'Foto principal (obligatoria)';
+                mostrarError('No pudimos subir la foto. Probá nuevamente con otra imagen.');
+            } finally {
+                subiendoTipo = null; pintarFotosPerfil();
             }
         }
 
@@ -517,21 +538,26 @@
             hapticTap();
             const ig = limpiarIG(document.getElementById('input-ig').value);
             const interes = document.getElementById('select-interes').value;
-            if (!usuarioActual.selfie_url) return alert("🖼️ Primero subí tu foto principal.");
-            if (!ig || !interes) return alert("Faltan datos para armar tu perfil.");
+            if (!usuarioActual.selfie_url || !ig || !interes) {
+                const campo = !usuarioActual.selfie_url ? null : !ig ? 'box-ig' : 'box-interes';
+                const falta = [!usuarioActual.selfie_url && 'foto principal', !ig && 'usuario de Instagram', !interes && 'a quién querés conocer'].filter(Boolean).join(', ');
+                return mostrarError(`Es necesario completar los datos obligatorios: ${falta}.`, campo);
+            }
+            limpiarError();
 
             const btn = document.getElementById('btn-activar');
             btn.innerText = "Activando...";
             const bio = document.getElementById('input-bio').value.trim();
             const { error } = await client.rpc('activar_perfil_match', { p_ticket_id: usuarioActual.id, p_instagram: ig, p_interes: interes, p_bio: bio, p_token: sesion.token });
             usuarioActual.bio = bio;
-            btn.innerText = "Activar Radar";
+            btn.innerText = "Activar perfil";
 
             if (error && error.message.includes('SESION_CERRADA')) return sesionCerrada();
             if (error) {
-                return alert(error.message.includes('Instagram') ? "Ese usuario de Instagram no es válido."
-                           : error.message.includes('foto principal') ? "🖼️ Primero subí tu foto principal."
-                           : "Error de conexión al subir el perfil.");
+                return mostrarError(error.message.includes('Instagram') ? "El usuario de Instagram ingresado no es válido."
+                           : error.message.includes('foto principal') ? "Es necesario cargar la foto principal."
+                           : "No pudimos guardar tu perfil. Revisá tu conexión e intentá nuevamente.",
+                           error.message.includes('Instagram') ? 'box-ig' : null);
             }
             usuarioActual.instagram = ig;
             usuarioActual.busca_match = true;
@@ -584,7 +610,7 @@
             const motivo = prompt(`¿Por qué reportás a @${limpiarIG(c.instagram)}?\n(ej: no es la persona de la foto, Instagram falso, ofensivo)`);
             if (motivo === null) return;
             await client.rpc('reportar_perfil', { mi_id: usuarioActual.id, objetivo_id: c.id, p_motivo: motivo, p_token: sesion.token });
-            alert('Gracias, lo vamos a revisar. No te va a aparecer más.');
+            toast('Gracias. Vamos a revisar el reporte y este perfil no volverá a aparecer.', 3000);
             indiceActual++;
             prepararTarjetas();
         }
