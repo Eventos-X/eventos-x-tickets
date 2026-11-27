@@ -35,11 +35,13 @@ const transporte = nodemailer.createTransport({
 });
 
 type Mail = {
-  cola_id: number; tipo: "qr" | "match"; destinatario: string;
-  entrada_id: string; nombre: string; apellido: string; tipo_entrada: string;
+  cola_id: number; tipo: "qr" | "match" | "recordatorio" | "alerta"; destinatario: string;
+  entrada_id: string | null; nombre: string | null; apellido: string | null; tipo_entrada: string | null;
+  asunto: string | null; cuerpo: string | null;
 };
+const ALIAS_PAGO = "bnz.fest";
 
-const esc = (s: string) =>
+const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
 // ---------- Link a Google Maps (al tocar la dirección) ----------
@@ -83,9 +85,41 @@ function marco(preheader: string, cabecera: string, cuerpo: string) {
 }
 
 function armarMail(m: Mail) {
-  const nombre = esc(m.nombre);
+  const nombre = esc(m.nombre ?? "");
+  if (m.tipo === "alerta") {
+    const lineas = esc(m.cuerpo ?? "").replace(/\n/g, "<br>");
+    const cuerpo = `
+      <p style="font-size:13px;color:#6b7280;margin:0 0 6px;text-transform:uppercase;letter-spacing:1px;">Aviso automático del sistema</p>
+      <p style="font-size:18px;color:#111827;margin:0 0 18px;font-weight:700;">${esc(m.asunto ?? "")}</p>
+      <div style="font-size:14px;color:#1f2937;line-height:1.6;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;">${lineas}</div>
+      <p style="font-size:13px;color:#6b7280;margin:18px 0 0;">Panel Admin: <a href="${SITE_URL}/admin.html" style="color:#3b82f6;">${SITE_URL}/admin.html</a></p>`;
+    return {
+      subject: `[Eventos X] ${m.asunto ?? "Aviso"}`,
+      text: `${m.asunto}\n\n${m.cuerpo}\n\nPanel Admin: ${SITE_URL}/admin.html`,
+      html: marco(m.asunto ?? "Aviso del sistema", "Aviso del sistema", cuerpo),
+    };
+  }
+  if (m.tipo === "recordatorio") {
+    const cuerpo = `
+      <p style="font-size:17px;color:#111827;margin:0 0 8px;font-weight:600;">Hola ${nombre},</p>
+      <p style="font-size:15px;color:#374151;margin:0 0 20px;line-height:1.6;">Tu reserva para ${EVENTO.nombre} sigue <b>pendiente de pago</b>. Para confirmarla y recibir tu entrada con el código QR, realizá la transferencia al siguiente alias:</p>
+      <div style="text-align:center;background:#0a0a0a;color:#3b82f6;font-size:24px;font-weight:800;letter-spacing:2px;border-radius:12px;padding:18px;margin-bottom:18px;">${ALIAS_PAGO}</div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;">
+        ${fila("Entrada reservada", esc(m.tipo_entrada ?? ""))}
+        ${fila("Fecha", `${EVENTO.fechaTexto} · ${EVENTO.hora}`)}
+      </table>
+      <div style="background:#fef3c7;border-radius:12px;padding:14px 16px;font-size:14px;color:#78350f;line-height:1.55;">
+        Si no se registra el pago dentro de las próximas <b>12 horas</b>, la reserva se cancelará automáticamente y el cupo quedará disponible para otra persona.
+      </div>
+      <p style="font-size:14px;color:#374151;margin:18px 0 0;line-height:1.6;">Si ya realizaste el pago, no hace falta que hagas nada: estamos verificándolo y vas a recibir tu QR en breve.<br><br><b>Equipo ${EVENTO.nombre}</b></p>`;
+    return {
+      subject: `Tu reserva para ${EVENTO.nombre} está pendiente de pago`,
+      text: `Hola ${m.nombre}, tu reserva para ${EVENTO.nombre} sigue pendiente de pago.\nTransferí al alias ${ALIAS_PAGO} para recibir tu QR.\nSi no se registra el pago en las próximas 12 horas, la reserva se cancela automáticamente.\nSi ya pagaste, no hace falta hacer nada.\n\nEquipo ${EVENTO.nombre}`,
+      html: marco("Tu reserva sigue pendiente de pago", "Reserva pendiente de pago", cuerpo),
+    };
+  }
   if (m.tipo === "qr") {
-    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=12&data=${encodeURIComponent(m.entrada_id)}`;
+    const qr = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=12&data=${encodeURIComponent(m.entrada_id ?? "")}`;
     const cuerpo = `
       <p style="font-size:17px;color:#111827;margin:0 0 8px;font-weight:600;">Hola ${nombre},</p>
       <p style="font-size:15px;color:#374151;margin:0 0 22px;line-height:1.6;">Confirmamos la acreditación de tu pago. A continuación encontrás tu entrada personal para ${EVENTO.nombre}.</p>
@@ -124,7 +158,7 @@ function armarMail(m: Mail) {
     };
   }
 
-  const link = `${SITE_URL}/match.html?id=${encodeURIComponent(m.entrada_id)}`;
+  const link = `${SITE_URL}/match.html?id=${encodeURIComponent(m.entrada_id ?? "")}`;
   const cuerpo = `
     <p style="font-size:17px;color:#111827;margin:0 0 8px;font-weight:600;">Hola ${nombre},</p>
     <p style="font-size:15px;color:#374151;margin:0 0 24px;line-height:1.6;">Tu ingreso quedó registrado. Activá tu perfil en <b>Match X</b> y ya podés embarrarte.</p>
