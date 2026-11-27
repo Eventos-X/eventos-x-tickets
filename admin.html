@@ -49,6 +49,12 @@
             .action-buttons { flex-direction: column; width: 100%; margin-top: 5px; }
             .btn-aprobar, .btn-rechazar { width: 100%; box-sizing: border-box; text-align: center; }
         }
+        .tabs { display:flex; gap:6px; background:#111; border:1px solid #222; border-radius:12px; padding:5px; margin-bottom:20px; }
+        .tab { flex:1; background:transparent; color:#888; border:none; padding:12px; border-radius:9px; font-weight:bold; font-size:14px; letter-spacing:.5px; cursor:pointer; text-transform:uppercase; position:relative; }
+        .tab.activa { background:#222; color:#fff; }
+        .tab .aviso { display:none; position:absolute; top:6px; right:10px; background:#ef4444; color:#fff; font-size:11px; border-radius:10px; padding:1px 7px; }
+        .panel-tab { display:none; }
+        .panel-tab.activa { display:block; }
     </style>
 </head>
 <body>
@@ -73,6 +79,13 @@
             </div>
         </div>
 
+        <div class="tabs">
+            <button class="tab activa" id="tab-btn-entradas" onclick="cambiarTab('entradas')">🎟️ Entradas</button>
+            <button class="tab" id="tab-btn-match" onclick="cambiarTab('match')">🔥 Match X <span class="aviso" id="aviso-reportes"></span></button>
+        </div>
+
+        <!-- ================= SOLAPA ENTRADAS ================= -->
+        <div class="panel-tab activa" id="tab-entradas">
         <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; background:#111; border:1px solid #222; border-radius:12px; padding:14px 18px; margin-bottom:20px;">
             <div style="color:#888; font-size:14px;">
                 📧 Mails — en cola: <b id="mails-pendientes" style="color:#fff;">0</b>
@@ -87,11 +100,40 @@
             </div>
         </div>
 
+        <input type="text" id="buscar-pendiente" placeholder="Buscar reserva por nombre, apellido, DNI o email" oninput="filtrarPendientes()"
+               style="width:100%; box-sizing:border-box; padding:12px 14px; background:#161616; border:1px solid #222; color:#fff; border-radius:10px; margin-bottom:15px; font-size:14px;">
         <div id="lista-pendientes"></div>
 
-        <div id="bloque-reportados" style="display:none; margin-top:40px;">
+        <!-- TIPOS DE ENTRADA Y PRECIOS -->
+        <div style="margin-top:40px;">
+            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">🎟️ Tipos de entrada y precios</h2>
+            <p style="color:#888; font-size:13px; margin:0 0 15px;">Lo que se cambia acá aparece al instante en la página de Entradas. Cupo vacío = sin límite propio (solo el aforo general).</p>
+            <div style="overflow-x:auto;">
+                <table id="tabla-tipos" style="width:100%; border-collapse:collapse; font-size:14px;">
+                    <thead><tr style="color:#888; text-align:left;">
+                        <th style="padding:8px;">Nombre</th><th style="padding:8px;">Precio $</th><th style="padding:8px;">Cupo</th>
+                        <th style="padding:8px;">Género (Match)</th><th style="padding:8px;">Orden</th><th style="padding:8px;">Activo</th>
+                        <th style="padding:8px;">Vendidas</th><th></th>
+                    </tr></thead>
+                    <tbody id="lista-tipos"></tbody>
+                </table>
+            </div>
+            <button class="btn-refresh" style="margin-top:12px;" onclick="agregarFilaTipo()">＋ Agregar tipo de entrada</button>
+        </div>
+
+        <!-- EXPORTAR -->
+        <div style="margin-top:40px; border:1px solid #222; border-radius:15px; padding:20px; background:#111;">
+            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">⬇️ Exportar</h2>
+            <p style="color:#888; font-size:13px; margin:0 0 15px;">Descargá todas las entradas en una planilla (CSV) para tener un respaldo.</p>
+            <button class="btn-refresh" onclick="exportarEntradas()">⬇️ Descargar planilla (CSV)</button>
+        </div>
+        </div>
+
+        <!-- ================= SOLAPA MATCH X ================= -->
+        <div class="panel-tab" id="tab-match">
+        <div id="bloque-reportados">
             <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 15px;">⚑ Perfiles reportados en Match X</h2>
-            <div id="lista-reportados"></div>
+            <div id="lista-reportados"><p style="color:#666; font-size:14px;">No hay perfiles reportados.</p></div>
         </div>
 
         <!-- MATCH X: SCORING POR PERSONA -->
@@ -116,31 +158,6 @@
             </div>
         </div>
 
-        <!-- TIPOS DE ENTRADA Y PRECIOS -->
-        <div style="margin-top:40px;">
-            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px;">🎟️ Tipos de entrada y precios</h2>
-            <p style="color:#888; font-size:13px; margin:0 0 15px;">Lo que se cambia acá aparece al instante en la página de Entradas. Cupo vacío = sin límite propio (solo el aforo general).</p>
-            <div style="overflow-x:auto;">
-                <table id="tabla-tipos" style="width:100%; border-collapse:collapse; font-size:14px;">
-                    <thead><tr style="color:#888; text-align:left;">
-                        <th style="padding:8px;">Nombre</th><th style="padding:8px;">Precio $</th><th style="padding:8px;">Cupo</th>
-                        <th style="padding:8px;">Género (Match)</th><th style="padding:8px;">Orden</th><th style="padding:8px;">Activo</th>
-                        <th style="padding:8px;">Vendidas</th><th></th>
-                    </tr></thead>
-                    <tbody id="lista-tipos"></tbody>
-                </table>
-            </div>
-            <button class="btn-refresh" style="margin-top:12px;" onclick="agregarFilaTipo()">＋ Agregar tipo de entrada</button>
-        </div>
-
-        <!-- ZONA DE PELIGRO: EXPORTAR Y LIMPIAR EVENTO -->
-        <div style="margin-top:50px; border:1px solid #ef4444; border-radius:15px; padding:20px; background:rgba(239,68,68,0.05);">
-            <h2 style="font-size:18px; letter-spacing:1px; margin:0 0 6px; color:#ef4444;">⚠️ Cerrar el evento</h2>
-            <p style="color:#aaa; font-size:13px; margin:0 0 15px;">Al terminar la fiesta: primero descargá la planilla y después limpiá. Limpiar borra <b>todas</b> las entradas, likes, reportes, mails en cola y fotos del Match. No se puede deshacer.</p>
-            <div style="display:flex; flex-wrap:wrap; gap:10px;">
-                <button class="btn-refresh" onclick="exportarEntradas()">⬇️ Descargar planilla (CSV)</button>
-                <button class="btn-rechazar" style="font-size:14px;" onclick="limpiarEvento()">🗑️ Limpiar evento</button>
-            </div>
         </div>
     </div>
 
@@ -300,26 +317,30 @@
             a.click();
         }
 
-        async function limpiarEvento() {
-            const conf = prompt('⚠️ Esto borra TODAS las entradas, likes, reportes y fotos del Match. No se puede deshacer.\n\n¿Ya descargaste la planilla? Para confirmar, escribí: BORRAR');
-            if (conf === null) return;
-            if (conf.trim() !== 'BORRAR') return alert('No se borró nada (no escribiste BORRAR).');
-            const r = await fetch(`${supabaseUrl}/functions/v1/limpiar-evento`, {
-                method: 'POST',
-                headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pin: getPin(), confirmacion: 'BORRAR' }),
+        function cambiarTab(t) {
+            ['entradas', 'match'].forEach(x => {
+                document.getElementById('tab-' + x).classList.toggle('activa', x === t);
+                document.getElementById('tab-btn-' + x).classList.toggle('activa', x === t);
             });
-            const res = await r.json();
-            if (!r.ok) return alert('❌ ' + (res.error || 'No se pudo limpiar'));
-            alert(`✅ Evento limpio: se borraron ${res.entradas} entradas y ${res.fotos} fotos.`);
-            cargarTodo();
+            if (t === 'match') { cargarReportados(); cargarRanking(false); }
+        }
+
+        function filtrarPendientes() {
+            const q = document.getElementById('buscar-pendiente').value.trim().toLowerCase();
+            document.querySelectorAll('#lista-pendientes .ticket-card').forEach(c => {
+                c.style.display = !q || c.dataset.buscar.includes(q) ? '' : 'none';
+            });
         }
 
         async function cargarReportados() {
             const { data, error } = await client.rpc('get_reportados', { pin_seguridad: getPin() });
-            const bloque = document.getElementById('bloque-reportados');
-            if (error || !data || data.length === 0) { bloque.style.display = 'none'; return; }
-            bloque.style.display = 'block';
+            const aviso = document.getElementById('aviso-reportes');
+            const visibles = (data || []).filter(r => !r.oculto).length;
+            aviso.textContent = visibles; aviso.style.display = visibles ? 'inline-block' : 'none';
+            if (error || !data || data.length === 0) {
+                document.getElementById('lista-reportados').innerHTML = '<p style="color:#666; font-size:14px;">No hay perfiles reportados.</p>';
+                return;
+            }
             document.getElementById('lista-reportados').innerHTML = data.map(r => `
                 <div class="ticket-card" style="${r.oculto ? 'border-color:#ef4444;' : ''}">
                     <div style="display:flex; gap:15px; align-items:center;">
@@ -391,7 +412,7 @@
                 }
 
                 return `
-                    <div class="ticket-card" id="card-${esc(entrada.id)}">
+                    <div class="ticket-card" id="card-${esc(entrada.id)}" data-buscar="${esc([entrada.nombre, entrada.apellido, entrada.dni, entrada.email].join(' ').toLowerCase())}">
                         <div class="ticket-info">
                             <h3>${esc(entrada.nombre)} ${esc(entrada.apellido)}</h3>
                             <p style="margin-bottom: 4px;">DNI: ${esc(entrada.dni)} | Email: ${esc(entrada.email)}</p>
@@ -404,6 +425,7 @@
                         </div>
                     </div>`;
             }).join('');
+            filtrarPendientes();
         }
 
         async function aprobarPago(id) {
